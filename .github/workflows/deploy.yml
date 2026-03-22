@@ -1,0 +1,25 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, deploy]
+    defaults:
+      run:
+        working-directory: /home/d/projects/github.com/DJRHails/slides.hails.info
+
+    env:
+      GIT_SSH_COMMAND: ssh -i /root/.ssh/slides -o StrictHostKeyChecking=accept-new
+
+    steps:
+      - name: Configure git
+        run: git config --global --add safe.directory /home/d/projects/github.com/DJRHails/slides.hails.info
+
+      - name: Pull latest changes
+        run: |
+          git fetch origin main
+          git reset --hard origin/main

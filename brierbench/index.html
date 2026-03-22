@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can LLMs Predict the Future? — Builders Retreat 2026</title>
+
+    <!-- IBM Plex Sans — matching the Economist chart styling -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (ECONOMIST THEME)
+           Adapted from the graph-design palette
+           =========================================== */
+        :root {
+            /* Colors — Economist red/grey palette */
+            --bg-primary: #1a1a1a;
+            --bg-card: #ffffff;
+            --bg-warm: #f7f5f0;
+            --red: #c44e52;
+            --red-dark: #a03c3f;
+            --red-light: rgba(196, 78, 82, 0.12);
+            --grey-dark: #3d3d3d;
+            --grey-mid: #8c8c8c;
+            --grey-light: #c8c8c8;
+            --grey-pale: #e8e6e1;
+            --text-dark: #1a1a1a;
+            --text-body: #3d3d3d;
+            --text-muted: #8c8c8c;
+            --text-on-dark: #e8e6e1;
+            --accent-blue: #4c72b0;
+
+            /* Typography — IBM Plex to match charts */
+            --font-display: 'IBM Plex Serif', serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --title-size: clamp(2rem, 5.5vw, 4.5rem);
+            --h2-size: clamp(1.4rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1rem, 2vw, 1.5rem);
+            --body-size: clamp(0.8rem, 1.4vw, 1.1rem);
+            --small-size: clamp(0.65rem, 1vw, 0.85rem);
+            --tiny-size: clamp(0.55rem, 0.8vw, 0.7rem);
+            --stat-size: clamp(2rem, 5vw, 4rem);
+
+            /* Spacing */
+            --slide-padding: clamp(2rem, 5vw, 5rem);
+            --content-gap: clamp(0.8rem, 2vw, 2rem);
+            --element-gap: clamp(0.4rem, 1vw, 1rem);
+
+            /* Animation */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+
+            --total-slides: 16;
+        }
+
+        /* ===========================================
+           BASE STYLES
+           =========================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* --- VIEWPORT BASE (mandatory) --- */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            padding-bottom: clamp(2.5rem, 5vw, 4rem);
+        }
+        .card, .container, .content-box {
+            max-width: min(90vw, 1000px);
+            max-height: min(80vh, 700px);
+        }
+        img, .image-container {
+            max-width: 100%;
+            max-height: min(70vh, 600px);
+            object-fit: contain;
+        }
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+                --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+                --h2-size: clamp(1rem, 3vw, 1.75rem);
+            }
+        }
+        @media (max-height: 600px) {
+            :root {
+                --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+                --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+                --title-size: clamp(1.1rem, 4vw, 2rem);
+                --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            }
+            .nav-dots, .keyboard-hint, .decorative { display: none; }
+        }
+        @media (max-height: 500px) {
+            :root {
+                --slide-padding: clamp(0.4rem, 2vw, 1rem);
+                --title-size: clamp(1rem, 3.5vw, 1.5rem);
+                --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+                --body-size: clamp(0.65rem, 1vw, 0.85rem);
+            }
+        }
+        @media (max-width: 600px) {
+            :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+
+        /* ===========================================
+           ECONOMIST THEME STYLES
+           =========================================== */
+
+        /* Red accent bar — top of each slide */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0; left: var(--slide-padding);
+            width: clamp(30px, 5vw, 50px);
+            height: 4px;
+            background: var(--red);
+            z-index: 10;
+        }
+
+        /* Dark slides don't get the bar */
+        .slide-dark::before { display: none; }
+
+        /* --- Light slide (default) --- */
+        .slide-light {
+            background: var(--bg-warm);
+        }
+
+        /* --- Dark slide --- */
+        .slide-dark {
+            background: var(--bg-primary);
+        }
+        .slide-dark .slide-content { color: var(--text-on-dark); }
+
+        /* ===========================================
+           SOURCE LINE — bottom of every slide
+           =========================================== */
+        .slide-source {
+            position: absolute;
+            bottom: clamp(0.6rem, 1.5vw, 1.2rem);
+            left: var(--slide-padding);
+            font-family: var(--font-body);
+            font-size: var(--tiny-size);
+            color: var(--grey-mid);
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            z-index: 5;
+        }
+        .slide-source .logo-mark {
+            width: clamp(10px, 1.2vw, 14px);
+            height: clamp(10px, 1.2vw, 14px);
+            flex-shrink: 0;
+        }
+        .slide-source .logo-mark path {
+            fill: var(--red);
+        }
+        .slide-dark .slide-source { color: rgba(232,230,225,0.3); }
+        .slide-dark .slide-source .logo-mark path { fill: rgba(232,230,225,0.3); }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        h1 {
+            font-family: var(--font-display);
+            font-size: var(--title-size);
+            font-weight: 700;
+            line-height: 1.05;
+            color: var(--text-dark);
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-family: var(--font-display);
+            font-size: var(--h2-size);
+            font-weight: 600;
+            line-height: 1.15;
+            color: var(--text-dark);
+        }
+        h3 {
+            font-family: var(--font-body);
+            font-size: var(--h3-size);
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--text-dark);
+        }
+        p, li {
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+            line-height: 1.6;
+            color: var(--text-body);
+        }
+        .slide-dark h1,
+        .slide-dark h2,
+        .slide-dark h3 { color: var(--text-on-dark); }
+        .slide-dark p,
+        .slide-dark li { color: rgba(232, 230, 225, 0.7); }
+
+        .eyebrow {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--red);
+            margin-bottom: clamp(0.4rem, 1vw, 0.8rem);
+        }
+
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+            font-weight: 300;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ===========================================
+           STAT BLOCKS
+           =========================================== */
+        .stats-row {
+            display: flex;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            flex-wrap: wrap;
+        }
+        .stat {
+            flex: 1;
+            min-width: clamp(100px, 20vw, 180px);
+        }
+        .stat-value {
+            font-family: var(--font-body);
+            font-size: var(--stat-size);
+            font-weight: 700;
+            color: var(--red);
+            line-height: 1;
+            margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem);
+        }
+        .stat-label {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+        .slide-dark .stat-label { color: rgba(232,230,225,0.5); }
+
+        /* ===========================================
+           TABLES (Economist style)
+           =========================================== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+        }
+        thead th {
+            text-align: left;
+            font-weight: 600;
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+            border-bottom: 2px solid var(--text-dark);
+            color: var(--text-dark);
+            font-size: var(--small-size);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        tbody td {
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+            border-bottom: 1px solid var(--grey-pale);
+            color: var(--text-body);
+        }
+        tbody tr:last-child td { border-bottom: 2px solid var(--text-dark); }
+        .slide-dark thead th {
+            color: var(--text-on-dark);
+            border-bottom-color: var(--text-on-dark);
+        }
+        .slide-dark tbody td {
+            color: rgba(232,230,225,0.7);
+            border-bottom-color: rgba(232,230,225,0.15);
+        }
+        .slide-dark tbody tr:last-child td {
+            border-bottom-color: var(--text-on-dark);
+        }
+        td.highlight {
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        /* ===========================================
+           BULLET LIST
+           =========================================== */
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.4rem, 1vh, 0.8rem);
+        }
+        .bullet-list li {
+            padding-left: clamp(1rem, 2vw, 1.5rem);
+            position: relative;
+        }
+        .bullet-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: clamp(0.4rem, 0.8vw, 0.55rem);
+            width: 6px; height: 6px;
+            background: var(--red);
+        }
+
+        /* ===========================================
+           FIGURE SLIDES
+           =========================================== */
+        .figure-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(0.3rem, 0.8vw, 0.6rem);
+        }
+        .figure-container img {
+            max-height: min(70vh, 600px);
+            border-radius: 4px;
+        }
+        .figure-caption {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            font-style: italic;
+            text-align: center;
+            max-width: min(80vw, 700px);
+        }
+
+        /* ===========================================
+           SLIDE NUMBER
+           =========================================== */
+        .slide-number {
+            position: absolute;
+            bottom: clamp(0.6rem, 1.5vw, 1.2rem);
+            right: clamp(1.5rem, 4vw, 3rem);
+            font-family: var(--font-body);
+            font-size: var(--tiny-size);
+            color: var(--grey-mid);
+            z-index: 5;
+        }
+        .slide-dark .slide-number { color: rgba(232,230,225,0.3); }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+        .slide.visible .reveal:nth-child(2) { transition-delay: 0.15s; }
+        .slide.visible .reveal:nth-child(3) { transition-delay: 0.25s; }
+        .slide.visible .reveal:nth-child(4) { transition-delay: 0.35s; }
+        .slide.visible .reveal:nth-child(5) { transition-delay: 0.45s; }
+
+        /* ===========================================
+           PROGRESS BAR
+           =========================================== */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            background: var(--red);
+            z-index: 9999;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* ===========================================
+           NAV DOTS
+           =========================================== */
+        .nav-dots {
+            position: fixed;
+            right: clamp(0.8rem, 2vw, 1.5rem);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vh, 10px);
+            z-index: 9998;
+        }
+        .nav-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--grey-light);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+        .nav-dot.active {
+            background: var(--red);
+            transform: scale(1.3);
+        }
+
+        /* ===========================================
+           TITLE SLIDE SPECIFIC
+           =========================================== */
+        .title-slide .slide-content {
+            justify-content: flex-end;
+            padding-bottom: clamp(3rem, 8vw, 8rem);
+        }
+        .title-slide h1 {
+            color: var(--text-on-dark);
+            max-width: min(80vw, 800px);
+        }
+        .title-slide .subtitle {
+            color: rgba(232,230,225,0.5);
+            max-width: min(70vw, 600px);
+            margin-top: clamp(0.5rem, 1.5vw, 1rem);
+        }
+        .title-slide .tag {
+            display: inline-block;
+            margin-top: clamp(1rem, 2.5vw, 2rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            color: var(--red);
+            border: 1.5px solid var(--red);
+            padding: 0.35em 1em;
+            border-radius: 2px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .title-slide .author {
+            margin-top: clamp(0.5rem, 1vw, 0.8rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: rgba(232,230,225,0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+        .title-slide .author .logo-mark {
+            width: clamp(12px, 1.5vw, 16px);
+            height: clamp(12px, 1.5vw, 16px);
+        }
+        .title-slide .author .logo-mark path {
+            fill: var(--red);
+        }
+
+        /* Two-column layout */
+        .two-col {
+            display: flex;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            align-items: flex-start;
+        }
+        .two-col > * { flex: 1; }
+        @media (max-width: 700px) {
+            .two-col { flex-direction: column; }
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: var(--red-light);
+            border-left: 3px solid var(--red);
+            padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.5rem);
+            border-radius: 0 4px 4px 0;
+            margin-top: clamp(0.5rem, 1vw, 1rem);
+        }
+        .highlight-box p {
+            font-size: var(--small-size);
+            color: var(--red-dark);
+            font-weight: 500;
+        }
+
+        /* ===========================================
+           INLINE EDITING (opt-in)
+           =========================================== */
+        .edit-hotzone {
+            position: fixed; top: 0; left: 0;
+            width: 80px; height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+        .edit-toggle {
+            position: fixed;
+            top: clamp(0.8rem, 2vw, 1.2rem);
+            left: clamp(0.8rem, 2vw, 1.2rem);
+            background: var(--bg-card);
+            border: 1.5px solid var(--grey-light);
+            border-radius: 4px;
+            padding: 0.4em 0.7em;
+            font-size: var(--small-size);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            font-family: var(--font-body);
+            color: var(--text-body);
+        }
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .edit-toggle.active {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+        [contenteditable="true"] {
+            outline: 1px dashed var(--red);
+            outline-offset: 2px;
+            cursor: text;
+        }
+
+        /* ===========================================
+           PERSONALITY CARDS
+           =========================================== */
+        .personality-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: clamp(0.8rem, 2vw, 1.5rem);
+        }
+        @media (max-width: 700px) {
+            .personality-grid { grid-template-columns: 1fr; }
+        }
+        .personality-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(232,230,225,0.1);
+            border-radius: 8px;
+            padding: clamp(0.8rem, 2vw, 1.5rem);
+        }
+        .personality-card h3 {
+            color: var(--text-on-dark);
+            font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+            margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem);
+        }
+        .personality-card .model-name {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--red);
+            font-weight: 600;
+            margin-bottom: clamp(0.3rem, 0.8vw, 0.5rem);
+        }
+        .personality-card p {
+            font-size: var(--small-size);
+        }
+
+        /* ===========================================
+           LINKS
+           =========================================== */
+        .slide-links {
+            display: flex;
+            gap: clamp(0.6rem, 1.5vw, 1.2rem);
+            flex-wrap: wrap;
+            margin-top: clamp(0.4rem, 1vw, 0.8rem);
+        }
+        .slide-links a {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--red);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        .slide-links a:hover {
+            border-bottom-color: var(--red);
+        }
+        .slide-links a::before {
+            content: '\2192\00a0';
+        }
+        .slide-dark .slide-links a {
+            color: var(--red);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Nav dots -->
+<nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+<!-- Inline editing controls -->
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">Edit</button>
+
+<!-- ===========================================
+     SLIDE 1: TITLE
+     =========================================== -->
+<section class="slide slide-dark title-slide" data-slide="0">
+    <div class="slide-content">
+        <p class="eyebrow reveal">ForecastBench Replication</p>
+        <h1 class="reveal">Can LLMs Predict the Future?</h1>
+        <p class="subtitle reveal">Evaluating frontier models against prediction markets &amp; superforecasters</p>
+        <span class="tag reveal">Builders Retreat &middot; March 2026</span>
+        <div class="author reveal">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+            Daniel Hails
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: hails.info
+    </div>
+    <span class="slide-number">1 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 2: MOTIVATION — FORWARD CURVES
+     =========================================== -->
+<section class="slide slide-light" data-slide="1">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Motivation</p>
+            <h2 class="reveal" style="text-align: center;">Forecasting is hard</h2>
+            <img src="figures/tbill-forward-curves.png" alt="Term-premium-adjusted forward curves vs actual 3-Month Treasury Bill rate from 1985-2030, showing how market-implied forecasts consistently fail to predict actual rates" class="reveal">
+            <p class="figure-caption reveal">40 years of forward curves vs reality. Markets are systematically wrong about future rates. Can LLMs do better?</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Sources: FRED TB3MS; GSW (FEDS 2006-28); ACM term premium (NY Fed)
+    </div>
+    <span class="slide-number">2 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 3: METR AUTONOMY EVALS
+     =========================================== -->
+<section class="slide slide-light" data-slide="2">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Context</p>
+            <h2 class="reveal" style="text-align: center;">AI agents are getting autonomous fast</h2>
+            <img src="figures/metr-autonomy-linear.png" alt="METR autonomy evaluation on linear scale showing AI agent task completion time growing from seconds to 12 hours, with Claude Opus 4.6 at the top" class="reveal">
+            <p class="figure-caption reveal">METR autonomy evals: time horizon of tasks AI agents can complete has gone from seconds to 12 hours. Autonomous agents need to predict consequences of their actions.</p>
+            <div class="slide-links reveal">
+                <a href="https://metr.org/autonomy-evals/" target="_blank">METR autonomy evals</a>
+                <a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/" target="_blank">Time Horizon paper</a>
+            </div>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: METR autonomy evaluations (metr.org)
+    </div>
+    <span class="slide-number">3 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 4: FORECASTBENCH LEADERBOARD
+     =========================================== -->
+<section class="slide slide-light" data-slide="3">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">The Benchmark</p>
+            <h2 class="reveal" style="text-align: center;">ForecastBench: Can LLMs forecast?</h2>
+            <img src="figures/forecastbench-leaderboard.png" alt="ForecastBench leaderboard showing Brier Index over time, with superforecaster baseline at 70.8 and best LLM trending toward parity by May 2027" class="reveal">
+            <p class="figure-caption reveal">LLM forecasting ability is improving steadily. Projected superforecaster parity: May 2027 (95% CI: May 2026 &ndash; July 2028). Contamination-free: 500 live questions every 2 weeks.</p>
+            <div class="slide-links reveal">
+                <a href="https://www.forecastbench.org/" target="_blank">forecastbench.org</a>
+                <a href="https://github.com/forecastingresearch/forecastbench" target="_blank">Source code</a>
+                <a href="https://github.com/forecastingresearch/forecastbench-datasets" target="_blank">Datasets</a>
+            </div>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: Karger et al. (2025), forecastbench.org
+    </div>
+    <span class="slide-number">4 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 5: REPLICATION RESULTS — TABLE
+     =========================================== -->
+<section class="slide slide-light" data-slide="4">
+    <div class="slide-content">
+        <p class="eyebrow reveal">Experiment 1</p>
+        <h2 class="reveal">Replication: Gemini-2.5-Flash</h2>
+        <p class="reveal" style="margin-top: var(--element-gap); max-width: min(75vw, 650px);">
+            Ran all 24 question sets via OpenRouter. Raw Brier scores closely match the official leaderboard.
+        </p>
+        <table class="reveal" style="margin-top: var(--content-gap); max-width: min(80vw, 700px);">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Ours (N=22,829)</th>
+                    <th>Leaderboard</th>
+                    <th>Delta</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Brier (dataset)</td>
+                    <td>0.185</td>
+                    <td>0.170</td>
+                    <td class="highlight">+0.015</td>
+                </tr>
+                <tr>
+                    <td>Brier (market)</td>
+                    <td>0.132</td>
+                    <td>0.146</td>
+                    <td class="highlight">&minus;0.014</td>
+                </tr>
+                <tr>
+                    <td>Brier (overall)</td>
+                    <td>0.181</td>
+                    <td>0.158</td>
+                    <td>+0.023</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="highlight-box reveal" style="max-width: min(80vw, 700px);">
+            <p>Cohen's d = 0.12 (negligible). Statistically significant but practically identical.</p>
+        </div>
+        <div class="slide-links reveal" style="max-width: min(80vw, 700px);">
+            <a href="https://openreward.ai/djrhails/run/d99e6bec-310f-40d1-8bc3-56887f1950fa" target="_blank">Zero-shot rollouts (100)</a>
+            <a href="https://openreward.ai/djrhails/run/668b1c7c-b0e4-4c68-ad4e-d9378fc53ef7" target="_blank">Research rollouts (100)</a>
+            <a href="https://openreward.ai/djrhails/run/2daf4baa-2838-4f23-82c6-186634aa3669" target="_blank">Forecast-skill rollouts (100)</a>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: ForecastBench leaderboard; our replication via OpenRouter
+    </div>
+    <span class="slide-number">5 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 6: WHAT IS BRIERBENCH
+     =========================================== -->
+<section class="slide slide-dark" data-slide="5">
+    <div class="slide-content">
+        <p class="eyebrow reveal">Our Contribution</p>
+        <h2 class="reveal">BrierBench: an OpenReward environment</h2>
+        <p class="reveal" style="max-width: min(75vw, 650px); margin-top: var(--element-gap);">
+            We packaged ForecastBench as a reusable evaluation environment on OpenReward. Any LLM agent can be benchmarked with a single API call &mdash; zero-shot, with web research, or with structured forecast strategies.
+        </p>
+        <div class="stats-row reveal" style="margin-top: var(--content-gap);">
+            <div class="stat">
+                <div class="stat-value">3</div>
+                <div class="stat-label">strategies<br><span style="font-size: 0.85em; opacity: 0.6;">zero_shot, zero_shot_research, forecast_skill</span></div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">$10&ndash;$175</div>
+                <div class="stat-label">full eval cost<br><span style="font-size: 0.85em; opacity: 0.6;">$10 Gemini-Flash, $175 Grok/Sonnet</span></div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">10 min</div>
+                <div class="stat-label">wall time<br><span style="font-size: 0.85em; opacity: 0.6;">concurrency=100</span></div>
+            </div>
+        </div>
+        <div class="slide-links reveal">
+            <a href="https://openreward.ai/envs/DJRHails/brierbench" target="_blank">BrierBench on OpenReward</a>
+            <a href="https://github.com/DJRHails/forecast-bench-replication" target="_blank">Replication repo</a>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: hails.info
+    </div>
+    <span class="slide-number">6 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 6: BRIER SCORE DISTRIBUTION
+     =========================================== -->
+<section class="slide slide-light" data-slide="6">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Experiment 1</p>
+            <h2 class="reveal" style="text-align: center;">Score distribution: market vs dataset</h2>
+            <img src="figures/brier_distribution_gemini-2.5-flash.png" alt="Histogram of per-question Brier scores for market and dataset splits, showing most predictions cluster near zero" class="reveal">
+            <p class="figure-caption reveal">Market questions cluster near 0 (easy wins). Dataset questions spread wider — time-series forecasting is harder than binary market questions.</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: our replication (N=22,829)
+    </div>
+    <span class="slide-number">7 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 7: BRIER OVER TIME FIGURE
+     =========================================== -->
+<section class="slide slide-light" data-slide="7">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Experiment 1</p>
+            <img src="figures/brier_per_set_gemini-2.5-flash.png" alt="Brier score per question set over time for Gemini-2.5-Flash, with horizontal reference lines for superforecaster and crowd baselines" class="reveal">
+            <p class="figure-caption reveal">Per-question-set Brier scores over time. The leaderboard baseline (0.158) is close to our mean. Recent sets trend higher due to unresolved long-horizon forecasts.</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: ForecastBench leaderboard; our replication
+    </div>
+    <span class="slide-number">8 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 8: BRIERBENCH ACCURACY BY DATE
+     =========================================== -->
+<section class="slide slide-light" data-slide="8">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">BrierBench</p>
+            <h2 class="reveal" style="text-align: center;">Zero-shot vs Research accuracy over time</h2>
+            <img src="figures/brierbench_brier_by_date.png" alt="BrierBench evaluation showing zero-shot and zero-shot-research Brier scores by question date, with model cutoff line" class="reveal">
+            <p class="figure-caption reveal">Brier scores by question date. Research strategy (web search) improves accuracy. Post-cutoff questions are harder — no training data leakage.</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: BrierBench evaluation via OpenReward
+    </div>
+    <span class="slide-number">9 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 9: FORECAST STRATEGY DECISION TREE
+     =========================================== -->
+<section class="slide slide-dark" data-slide="9">
+    <div class="slide-content">
+        <p class="eyebrow reveal">Forecast Skill</p>
+        <h2 class="reveal">Strategy selection tree</h2>
+        <div class="reveal mermaid-container" style="margin-top: var(--content-gap); max-width: min(95vw, 950px); max-height: min(65vh, 540px); overflow: hidden;">
+            <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#3d2022', 'primaryTextColor': '#e8e6e1', 'primaryBorderColor': '#c44e52', 'lineColor': '#555550', 'secondaryColor': '#2a3a56', 'tertiaryColor': '#2d2d2d', 'fontFamily': 'IBM Plex Sans', 'fontSize': '13px', 'nodeBorder': '#c44e52', 'mainBkg': '#3d2022', 'clusterBkg': '#2d2d2d'}}}%%
+graph TD
+    A{Binary?} -->|Yes| B{Stock direction?}
+    A -->|No| C{Continuous or discrete?}
+
+    B -->|Yes| D[binary_stock_direction]
+    B -->|No| E{Decomposable?}
+
+    E -->|Yes| F[scenario_decomposition]
+    E -->|No| G{Needs simulation?}
+
+    G -->|Yes| H[monte_carlo_binary]
+    G -->|No| I[scenario_decomposition]
+
+    C -->|Continuous| J{Price/index GBM?}
+    C -->|Discrete| K{Rare events?}
+
+    J -->|Yes| L[mixture_lognormal_cdf]
+    J -->|No| M{Naturally lognormal?}
+
+    M -->|Yes| N[direct_lognormal_cdf]
+    M -->|No| O{Needs simulation?}
+
+    O -->|Yes| P[monte_carlo_cdf]
+    O -->|No| Q[mixture_normal_cdf]
+
+    K -->|Yes| R[poisson_pmf]
+    K -->|No| S{Independent trials?}
+
+    S -->|Yes| T[poisson_binomial_pmf]
+    S -->|No| U[negative_binomial_pmf]
+
+    style D fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style F fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style H fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style I fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style L fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style N fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style P fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style Q fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style R fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style T fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+    style U fill:#2a3a56,stroke:#4c72b0,color:#7da1d4
+            </pre>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: BrierBench forecast_skill strategy
+    </div>
+    <span class="slide-number">10 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 10: GPT-5.4 VS MARKETS
+     =========================================== -->
+<section class="slide slide-light" data-slide="10">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Experiment 2</p>
+            <h2 class="reveal" style="text-align: center;">GPT-5.4 vs Live Markets</h2>
+            <img src="figures/market_scatter_gpt-5.4.png" alt="Scatter plot of GPT-5.4 forecast vs market price" class="reveal">
+            <p class="figure-caption reveal">Closest to consensus. Mean |&delta;| = 0.220. Diagonal = perfect agreement.</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Sources: Manifold, Metaculus, INFER, Polymarket via ForecastBench
+    </div>
+    <span class="slide-number">11 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 8: GEMINI-3.1-PRO VS MARKETS
+     =========================================== -->
+<section class="slide slide-light" data-slide="11">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Experiment 2</p>
+            <h2 class="reveal" style="text-align: center;">Gemini-3.1-Pro vs Live Markets</h2>
+            <img src="figures/market_scatter_gemini-3.1-pro-preview.png" alt="Scatter plot of Gemini-3.1-Pro forecast vs market price" class="reveal">
+            <p class="figure-caption reveal">Conservative bias &mdash; systematically predicts lower. Bias = &minus;0.083.</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Sources: Manifold, Metaculus, INFER, Polymarket via ForecastBench
+    </div>
+    <span class="slide-number">12 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 9: GROK-4.20-BETA VS MARKETS
+     =========================================== -->
+<section class="slide slide-light" data-slide="12">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Experiment 2</p>
+            <h2 class="reveal" style="text-align: center;">Grok-4.20-beta vs Live Markets</h2>
+            <img src="figures/market_scatter_grok-4.20-beta.png" alt="Scatter plot of Grok-4.20-beta forecast vs market price showing extreme contrarian positions" class="reveal">
+            <p class="figure-caption reveal">Most contrarian. Mean |&delta;| = 0.274. Loves extreme probabilities (92&ndash;95%).</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Sources: Manifold, Metaculus, INFER, Polymarket via ForecastBench
+    </div>
+    <span class="slide-number">13 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 8: GROK THE CONTRARIAN
+     =========================================== -->
+<section class="slide slide-dark" data-slide="13">
+    <div class="slide-content">
+        <p class="eyebrow reveal">Key Finding</p>
+        <h2 class="reveal">Grok is a weird contrarian</h2>
+        <div class="stats-row reveal" style="margin-top: var(--content-gap);">
+            <div class="stat">
+                <div class="stat-value">0.274</div>
+                <div class="stat-label">mean |delta| vs markets<br><span style="font-size: 0.85em; opacity: 0.6;">GPT-5.4: 0.220, Gemini: 0.224</span></div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">92%</div>
+                <div class="stat-label">frequently assigned probability<br><span style="font-size: 0.85em; opacity: 0.6;">loves extreme confidence</span></div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">+0.06</div>
+                <div class="stat-label">positive bias vs markets<br><span style="font-size: 0.85em; opacity: 0.6;">predicts higher than the crowd</span></div>
+            </div>
+        </div>
+        <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(80vw, 700px); background: rgba(196,78,82,0.08); border-left-color: var(--red);">
+            <p style="color: var(--text-on-dark); font-weight: 400;">Superforecasters still win (Brier Index 70.8 vs best LLM 64.2). Contrarianism hurts more than it helps.</p>
+        </div>
+        <div class="slide-links reveal" style="max-width: min(80vw, 700px);">
+            <a href="https://openreward.ai/envs/DJRHails/brierbench" target="_blank">BrierBench on OpenReward</a>
+            <a href="https://github.com/DJRHails/forecast-bench-replication" target="_blank">Replication repo</a>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: hails.info
+    </div>
+    <span class="slide-number">14 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 15: EF UNICORN PREDICTIONS
+     =========================================== -->
+<section class="slide slide-light" data-slide="14">
+    <div class="slide-content" style="align-items: center;">
+        <div class="figure-container">
+            <p class="eyebrow reveal">Bonus: Applied Forecasting</p>
+            <h2 class="reveal" style="text-align: center;">EF 2025 Batch: Unicorn predictions</h2>
+            <img src="figures/ef_unicorn_predictions.png" alt="Horizontal bar chart showing Grok-4.20-beta zero-shot unicorn probability predictions for EF 2025 batch companies, ranging from 27% (Buckeye AI) to 9% (Krew)" class="reveal">
+            <p class="figure-caption reveal">Grok-4.20-beta zero-shot predictions for which EF 2025 companies become unicorns by 2031.</p>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: BrierBench via OpenReward, x-ai/grok-4.20-beta
+    </div>
+    <span class="slide-number">15 / 16</span>
+</section>
+
+<!-- ===========================================
+     SLIDE 16: DISCLAIMER
+     =========================================== -->
+<section class="slide slide-dark" data-slide="15">
+    <div class="slide-content" style="justify-content: center; align-items: center;">
+        <div style="max-width: min(80vw, 700px); text-align: center;">
+            <h2 class="reveal" style="color: var(--red); margin-bottom: var(--content-gap);">Massive caveats</h2>
+            <ul class="bullet-list reveal" style="text-align: left;">
+                <li>Single zero-shot Grok run &mdash; <strong>no ensemble, no calibration, no fine-tuning</strong></li>
+                <li>One question set only &mdash; results may not generalise across time periods</li>
+                <li>Retroactive forecasting &mdash; model may have indirect knowledge of some outcomes</li>
+                <li>EF unicorn predictions are <strong>entertainment, not investment advice</strong></li>
+                <li>Base rate for unicorns is ~1% &mdash; all predictions are likely too high</li>
+            </ul>
+            <div class="highlight-box reveal" style="margin-top: var(--content-gap); background: rgba(196,78,82,0.08); border-left-color: var(--red);">
+                <p style="color: var(--text-on-dark); font-weight: 500; font-size: var(--body-size);">Do not make decisions based on these numbers. This is a methodology demo, not a forecasting product.</p>
+            </div>
+            <div class="slide-links reveal" style="justify-content: center; margin-top: var(--content-gap);">
+                <a href="https://openreward.ai/envs/DJRHails/brierbench" target="_blank">BrierBench on OpenReward</a>
+                <a href="https://github.com/DJRHails/forecast-bench-replication" target="_blank">Replication repo</a>
+                <a href="https://hails.info" target="_blank">hails.info</a>
+            </div>
+        </div>
+    </div>
+    <div class="slide-source">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226"><path d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z"/></svg>
+        Source: hails.info
+    </div>
+    <span class="slide-number">16 / 16</span>
+</section>
+
+<script>
+    /* ===========================================
+       SLIDE PRESENTATION CONTROLLER
+       =========================================== */
+    class SlidePresentation {
+        constructor() {
+            this.slides = document.querySelectorAll('.slide');
+            this.currentSlide = 0;
+            this.isScrolling = false;
+            this.setupIntersectionObserver();
+            this.setupKeyboardNav();
+            this.setupTouchNav();
+            this.setupWheelNav();
+            this.setupProgressBar();
+            this.setupNavDots();
+        }
+
+        setupIntersectionObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        const idx = parseInt(entry.target.dataset.slide);
+                        if (!isNaN(idx)) {
+                            this.currentSlide = idx;
+                            this.updateProgressBar();
+                            this.updateNavDots();
+                        }
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            this.slides.forEach(slide => observer.observe(slide));
+        }
+
+        goToSlide(index) {
+            if (index >= 0 && index < this.slides.length) {
+                this.slides[index].scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        setupKeyboardNav() {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.getAttribute('contenteditable') === 'true') return;
+                switch(e.key) {
+                    case 'ArrowDown':
+                    case 'ArrowRight':
+                    case ' ':
+                    case 'PageDown':
+                        e.preventDefault();
+                        this.goToSlide(this.currentSlide + 1);
+                        break;
+                    case 'ArrowUp':
+                    case 'ArrowLeft':
+                    case 'PageUp':
+                        e.preventDefault();
+                        this.goToSlide(this.currentSlide - 1);
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        this.goToSlide(0);
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        this.goToSlide(this.slides.length - 1);
+                        break;
+                }
+            });
+        }
+
+        setupTouchNav() {
+            let startY = 0;
+            document.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+            document.addEventListener('touchend', (e) => {
+                const dy = startY - e.changedTouches[0].clientY;
+                if (Math.abs(dy) > 50) {
+                    this.goToSlide(this.currentSlide + (dy > 0 ? 1 : -1));
+                }
+            }, { passive: true });
+        }
+
+        setupWheelNav() {
+            let lastWheel = 0;
+            document.addEventListener('wheel', (e) => {
+                const now = Date.now();
+                if (now - lastWheel < 800) return;
+                if (Math.abs(e.deltaY) > 30) {
+                    lastWheel = now;
+                    this.goToSlide(this.currentSlide + (e.deltaY > 0 ? 1 : -1));
+                }
+            }, { passive: true });
+        }
+
+        setupProgressBar() {
+            this.progressBar = document.getElementById('progressBar');
+            this.updateProgressBar();
+        }
+
+        updateProgressBar() {
+            if (this.progressBar) {
+                const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+                this.progressBar.style.width = progress + '%';
+            }
+        }
+
+        setupNavDots() {
+            const container = document.getElementById('navDots');
+            if (!container) return;
+            this.slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                dot.addEventListener('click', () => this.goToSlide(i));
+                container.appendChild(dot);
+            });
+            this.dots = container.querySelectorAll('.nav-dot');
+        }
+
+        updateNavDots() {
+            if (!this.dots) return;
+            this.dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === this.currentSlide);
+            });
+        }
+    }
+
+    /* ===========================================
+       INLINE EDITOR
+       =========================================== */
+    class InlineEditor {
+        constructor() {
+            this.isActive = false;
+            this.editToggle = document.getElementById('editToggle');
+            this.setupHotzone();
+            this.setupKeyboard();
+            this.loadSaved();
+        }
+
+        setupHotzone() {
+            const hotzone = document.getElementById('editHotzone');
+            let hideTimeout = null;
+
+            hotzone.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimeout);
+                this.editToggle.classList.add('show');
+            });
+            hotzone.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(() => {
+                    if (!this.isActive) this.editToggle.classList.remove('show');
+                }, 400);
+            });
+            this.editToggle.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimeout);
+            });
+            this.editToggle.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(() => {
+                    if (!this.isActive) this.editToggle.classList.remove('show');
+                }, 400);
+            });
+            this.editToggle.addEventListener('click', () => this.toggleEditMode());
+            hotzone.addEventListener('click', () => this.toggleEditMode());
+        }
+
+        setupKeyboard() {
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                    this.toggleEditMode();
+                }
+                if (e.key === 's' && (e.ctrlKey || e.metaKey) && this.isActive) {
+                    e.preventDefault();
+                    this.save();
+                }
+            });
+        }
+
+        toggleEditMode() {
+            this.isActive = !this.isActive;
+            this.editToggle.classList.toggle('active', this.isActive);
+            this.editToggle.textContent = this.isActive ? 'Editing (Ctrl+S to save)' : 'Edit';
+
+            document.querySelectorAll('h1, h2, h3, p, li, td, .stat-value, .stat-label, .figure-caption, .eyebrow, .subtitle, .tag').forEach(el => {
+                if (!el.closest('.nav-dots') && !el.closest('.edit-toggle')) {
+                    el.contentEditable = this.isActive ? 'true' : 'false';
+                }
+            });
+        }
+
+        save() {
+            const content = document.documentElement.innerHTML;
+            localStorage.setItem('slides-forecastbench', content);
+            const msg = document.createElement('div');
+            msg.textContent = 'Saved!';
+            msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--red);color:#fff;padding:0.5em 1.5em;border-radius:4px;font-family:var(--font-body);z-index:99999;';
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 1200);
+        }
+
+        loadSaved() {
+            /* Uncomment to enable auto-load from localStorage:
+            const saved = localStorage.getItem('slides-forecastbench');
+            if (saved) document.documentElement.innerHTML = saved;
+            */
+        }
+    }
+
+    /* Initialize */
+    const presentation = new SlidePresentation();
+    const editor = new InlineEditor();
+</script>
+
+<!-- Mermaid for decision tree diagram -->
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        fontFamily: 'IBM Plex Sans',
+    });
+</script>
+</body>
+</html>
