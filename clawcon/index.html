@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Delightful Always-Listening Agent — ClawCon 2026</title>
+
+    <!-- IBM Plex Sans — matching the Economist chart styling -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (ECONOMIST THEME)
+           Adapted from the graph-design palette
+           =========================================== */
+        :root {
+            /* Colors — Economist red/grey palette */
+            --bg-primary: #1a1a1a;
+            --bg-card: #ffffff;
+            --bg-warm: #f7f5f0;
+            --red: #c44e52;
+            --red-dark: #a03c3f;
+            --red-light: rgba(196, 78, 82, 0.12);
+            --grey-dark: #3d3d3d;
+            --grey-mid: #8c8c8c;
+            --grey-light: #c8c8c8;
+            --grey-pale: #e8e6e1;
+            --text-dark: #1a1a1a;
+            --text-body: #3d3d3d;
+            --text-muted: #8c8c8c;
+            --text-on-dark: #e8e6e1;
+            --accent-blue: #4c72b0;
+
+            /* Typography — IBM Plex to match charts */
+            --font-display: 'IBM Plex Serif', serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --title-size: clamp(2rem, 5.5vw, 4.5rem);
+            --h2-size: clamp(1.4rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1rem, 2vw, 1.5rem);
+            --body-size: clamp(0.8rem, 1.4vw, 1.1rem);
+            --small-size: clamp(0.65rem, 1vw, 0.85rem);
+            --tiny-size: clamp(0.55rem, 0.8vw, 0.7rem);
+            --stat-size: clamp(2rem, 5vw, 4rem);
+
+            /* Spacing */
+            --slide-padding: clamp(2rem, 5vw, 5rem);
+            --content-gap: clamp(0.8rem, 2vw, 2rem);
+            --element-gap: clamp(0.4rem, 1vw, 1rem);
+
+            /* Animation */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+
+            --total-slides: 13;
+        }
+
+        /* ===========================================
+           BASE STYLES
+           =========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* --- VIEWPORT BASE (mandatory) --- */
+        html,
+        body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            padding-bottom: clamp(2.5rem, 5vw, 4rem);
+        }
+
+        .card,
+        .container,
+        .content-box {
+            max-width: min(90vw, 1000px);
+            max-height: min(80vh, 700px);
+        }
+
+        img,
+        .image-container {
+            max-width: 100%;
+            max-height: min(70vh, 600px);
+            object-fit: contain;
+        }
+
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+                --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+                --h2-size: clamp(1rem, 3vw, 1.75rem);
+            }
+        }
+
+        @media (max-height: 600px) {
+            :root {
+                --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+                --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+                --title-size: clamp(1.1rem, 4vw, 2rem);
+                --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            }
+
+            .nav-dots,
+            .keyboard-hint,
+            .decorative {
+                display: none;
+            }
+        }
+
+        @media (max-height: 500px) {
+            :root {
+                --slide-padding: clamp(0.4rem, 2vw, 1rem);
+                --title-size: clamp(1rem, 3.5vw, 1.5rem);
+                --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+                --body-size: clamp(0.65rem, 1vw, 0.85rem);
+            }
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --title-size: clamp(1.25rem, 7vw, 2.5rem);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        /* ===========================================
+           ECONOMIST THEME STYLES
+           =========================================== */
+
+        /* Red accent bar — top of each slide */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: var(--slide-padding);
+            width: clamp(30px, 5vw, 50px);
+            height: 4px;
+            background: var(--red);
+            z-index: 10;
+        }
+
+        /* Dark slides don't get the bar */
+        .slide-dark::before {
+            display: none;
+        }
+
+        /* --- Light slide (default) --- */
+        .slide-light {
+            background: var(--bg-warm);
+        }
+
+        /* --- Dark slide --- */
+        .slide-dark {
+            background: var(--bg-primary);
+        }
+
+        .slide-dark .slide-content {
+            color: var(--text-on-dark);
+        }
+
+        /* ===========================================
+           SOURCE LINE — bottom of every slide
+           =========================================== */
+        .slide-source {
+            position: absolute;
+            bottom: clamp(0.7rem, 1.75vw, 1.4rem);
+            left: var(--slide-padding);
+            font-family: var(--font-body);
+            font-size: clamp(0.75rem, 1.3vw, 1.15rem);
+            color: var(--grey-mid);
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            z-index: 5;
+        }
+
+        .slide-source .logo-mark {
+            width: clamp(14px, 1.8vw, 21px);
+            height: clamp(14px, 1.8vw, 21px);
+            flex-shrink: 0;
+        }
+
+        .slide-source .logo-mark path {
+            fill: var(--red);
+        }
+
+        .slide-dark .slide-source {
+            color: rgba(232, 230, 225, 0.3);
+        }
+
+        .slide-dark .slide-source .logo-mark path {
+            fill: rgba(232, 230, 225, 0.3);
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        h1 {
+            font-family: var(--font-display);
+            font-size: var(--title-size);
+            font-weight: 700;
+            line-height: 1.05;
+            color: var(--text-dark);
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: var(--h2-size);
+            font-weight: 600;
+            line-height: 1.15;
+            color: var(--text-dark);
+        }
+
+        h3 {
+            font-family: var(--font-body);
+            font-size: var(--h3-size);
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--text-dark);
+        }
+
+        p,
+        li {
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+            line-height: 1.6;
+            color: var(--text-body);
+        }
+
+        .slide-dark h1,
+        .slide-dark h2,
+        .slide-dark h3 {
+            color: var(--text-on-dark);
+        }
+
+        .slide-dark p,
+        .slide-dark li {
+            color: rgba(232, 230, 225, 0.7);
+        }
+
+        .eyebrow {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--red);
+            margin-bottom: clamp(0.4rem, 1vw, 0.8rem);
+        }
+
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+            font-weight: 300;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ===========================================
+           STAT BLOCKS
+           =========================================== */
+        .stats-row {
+            display: flex;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: clamp(100px, 20vw, 180px);
+        }
+
+        .stat-value {
+            font-family: var(--font-body);
+            font-size: var(--stat-size);
+            font-weight: 700;
+            color: var(--red);
+            line-height: 1;
+            margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem);
+        }
+
+        .stat-label {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .slide-dark .stat-label {
+            color: rgba(232, 230, 225, 0.5);
+        }
+
+        /* ===========================================
+           TABLES (Economist style)
+           =========================================== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+        }
+
+        thead th {
+            text-align: left;
+            font-weight: 600;
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+            border-bottom: 2px solid var(--text-dark);
+            color: var(--text-dark);
+            font-size: var(--small-size);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tbody td {
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+            border-bottom: 1px solid var(--grey-pale);
+            color: var(--text-body);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 2px solid var(--text-dark);
+        }
+
+        .slide-dark thead th {
+            color: var(--text-on-dark);
+            border-bottom-color: var(--text-on-dark);
+        }
+
+        .slide-dark tbody td {
+            color: rgba(232, 230, 225, 0.7);
+            border-bottom-color: rgba(232, 230, 225, 0.15);
+        }
+
+        .slide-dark tbody tr:last-child td {
+            border-bottom-color: var(--text-on-dark);
+        }
+
+        td.highlight {
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        /* ===========================================
+           BULLET LIST
+           =========================================== */
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.9rem, 2vh, 1.6rem);
+        }
+
+        .bullet-list li {
+            padding-left: clamp(1.4rem, 2.6vw, 2rem);
+            position: relative;
+            font-size: clamp(1.3rem, 2.4vw, 2rem);
+            line-height: 1.45;
+        }
+
+        .bullet-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: clamp(0.7rem, 1.3vw, 1rem);
+            width: 10px;
+            height: 10px;
+            background: var(--red);
+        }
+
+        /* ===========================================
+           FIGURE SLIDES
+           =========================================== */
+        .figure-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(0.3rem, 0.8vw, 0.6rem);
+        }
+
+        .figure-container img {
+            max-height: min(70vh, 600px);
+            border-radius: 4px;
+        }
+
+        .figure-caption {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            font-style: italic;
+            text-align: center;
+            max-width: min(80vw, 700px);
+        }
+
+        /* ===========================================
+           SLIDE NUMBER
+           =========================================== */
+        .slide-number {
+            position: absolute;
+            bottom: clamp(0.7rem, 1.75vw, 1.4rem);
+            right: clamp(1.5rem, 4vw, 3rem);
+            font-family: var(--font-body);
+            font-size: clamp(0.75rem, 1.3vw, 1.15rem);
+            color: var(--grey-mid);
+            z-index: 5;
+        }
+
+        .slide-dark .slide-number {
+            color: rgba(232, 230, 225, 0.3);
+        }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide.visible .reveal:nth-child(1) {
+            transition-delay: 0.05s;
+        }
+
+        .slide.visible .reveal:nth-child(2) {
+            transition-delay: 0.15s;
+        }
+
+        .slide.visible .reveal:nth-child(3) {
+            transition-delay: 0.25s;
+        }
+
+        .slide.visible .reveal:nth-child(4) {
+            transition-delay: 0.35s;
+        }
+
+        .slide.visible .reveal:nth-child(5) {
+            transition-delay: 0.45s;
+        }
+
+        /* ===========================================
+           PROGRESS BAR
+           =========================================== */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--red);
+            z-index: 9999;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* ===========================================
+           NAV DOTS
+           =========================================== */
+        .nav-dots {
+            position: fixed;
+            right: clamp(0.8rem, 2vw, 1.5rem);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vh, 10px);
+            z-index: 9998;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--grey-light);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .nav-dot.active {
+            background: var(--red);
+            transform: scale(1.3);
+        }
+
+        /* ===========================================
+           TITLE SLIDE SPECIFIC
+           =========================================== */
+        .title-slide .slide-content {
+            justify-content: flex-end;
+            padding-bottom: clamp(3rem, 8vw, 8rem);
+        }
+
+        .title-slide h1 {
+            color: var(--text-on-dark);
+            max-width: min(80vw, 800px);
+        }
+
+        .title-slide .subtitle {
+            color: rgba(232, 230, 225, 0.5);
+            max-width: min(70vw, 600px);
+            margin-top: clamp(0.5rem, 1.5vw, 1rem);
+        }
+
+        .title-slide .tag {
+            display: inline-block;
+            margin-top: clamp(1rem, 2.5vw, 2rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            color: var(--red);
+            border: 1.5px solid var(--red);
+            padding: 0.35em 1em;
+            border-radius: 2px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .title-slide .author {
+            margin-top: clamp(0.5rem, 1vw, 0.8rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: rgba(232, 230, 225, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+
+        .title-slide .author .logo-mark {
+            width: clamp(12px, 1.5vw, 16px);
+            height: clamp(12px, 1.5vw, 16px);
+        }
+
+        .title-slide .author .logo-mark path {
+            fill: var(--red);
+        }
+
+        /* Two-column layout */
+        .two-col {
+            display: flex;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            align-items: flex-start;
+        }
+
+        .two-col>* {
+            flex: 1;
+        }
+
+        @media (max-width: 700px) {
+            .two-col {
+                flex-direction: column;
+            }
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: var(--red-light);
+            border-left: 3px solid var(--red);
+            padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.5rem);
+            border-radius: 0 4px 4px 0;
+            margin-top: clamp(0.5rem, 1vw, 1rem);
+        }
+
+        .highlight-box p {
+            font-size: var(--small-size);
+            color: var(--red-dark);
+            font-weight: 500;
+        }
+
+        /* ===========================================
+           INLINE EDITING (opt-in)
+           =========================================== */
+        .edit-hotzone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+
+        .edit-toggle {
+            position: fixed;
+            top: clamp(0.8rem, 2vw, 1.2rem);
+            left: clamp(0.8rem, 2vw, 1.2rem);
+            background: var(--bg-card);
+            border: 1.5px solid var(--grey-light);
+            border-radius: 4px;
+            padding: 0.4em 0.7em;
+            font-size: var(--small-size);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            font-family: var(--font-body);
+            color: var(--text-body);
+        }
+
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .edit-toggle.active {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+
+        [contenteditable="true"] {
+            outline: 1px dashed var(--red);
+            outline-offset: 2px;
+            cursor: text;
+        }
+
+        /* ===========================================
+           PERSONALITY CARDS
+           =========================================== */
+        .personality-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: clamp(0.8rem, 2vw, 1.5rem);
+        }
+
+        @media (max-width: 700px) {
+            .personality-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .personality-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(232, 230, 225, 0.1);
+            border-radius: 8px;
+            padding: clamp(0.8rem, 2vw, 1.5rem);
+        }
+
+        .personality-card h3 {
+            color: var(--text-on-dark);
+            font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+            margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem);
+        }
+
+        .personality-card .model-name {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--red);
+            font-weight: 600;
+            margin-bottom: clamp(0.3rem, 0.8vw, 0.5rem);
+        }
+
+        .personality-card p {
+            font-size: var(--small-size);
+        }
+
+        /* ===========================================
+           LINKS
+           =========================================== */
+        .slide-links {
+            display: flex;
+            gap: clamp(0.6rem, 1.5vw, 1.2rem);
+            flex-wrap: wrap;
+            margin-top: clamp(0.4rem, 1vw, 0.8rem);
+        }
+
+        .slide-links a {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--red);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .slide-links a:hover {
+            border-bottom-color: var(--red);
+        }
+
+        .slide-links a::before {
+            content: '\2192\00a0';
+        }
+
+        .slide-dark .slide-links a {
+            color: var(--red);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Progress bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Nav dots -->
+    <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+    <!-- Inline editing controls -->
+    <div class="edit-hotzone" id="editHotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">Edit</button>
+
+    <!-- ===========================================
+     SLIDE 1: TITLE
+     =========================================== -->
+    <!-- ===========================================
+     SLIDE 1: TITLE
+     =========================================== -->
+    <section class="slide slide-dark title-slide" data-slide="0">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Building AI agents at <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">Saint</a> &middot; ClawCon London 2026</p>
+            <h1 class="reveal" style="font-size: clamp(3rem, 11vw, 9rem); line-height: 0.95; max-width: 95vw;">Bet
+                against Privacy</h1>
+            <p class="subtitle reveal">Four things I&rsquo;ve learned building delightful always&#8209;listening agents.
+            </p>
+            <div class="author reveal">
+                <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                    <path
+                        d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+                </svg>
+                Daniel Hails
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">saint.work</a> &middot; <a href="https://hails.info" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">hails.info</a>
+        </div>
+        <span class="slide-number">1 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 2: OPENER
+     =========================================== -->
+    <section class="slide slide-light" data-slide="1">
+        <div class="slide-content" style="align-items: center; justify-content: center;">
+            <div style="max-width: min(80vw, 750px); text-align: center;">
+                <p class="eyebrow reveal">Disclaimer: I only learned I was talking today!</p>
+                <h2 class="reveal" style="margin-top: var(--element-gap);">
+                    If it&rsquo;s good, that&rsquo;s the lobster.
+                </h2>
+                <h2 class="reveal" style="margin-top: var(--element-gap);">If it&rsquo;s bad, that&rsquo;s me.</h2>
+                <p class="reveal" style="margin-top: var(--content-gap); color: var(--text-muted);">
+                    I&rsquo;m Daniel Hails. I've building AI agents at <strong
+                        style="color: var(--red);">Saint</strong>.
+                </p>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: hails.info
+        </div>
+        <span class="slide-number">2 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 3: CARRASCAL — €7 HERO
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="2">
+        <div class="slide-content" style="align-items: center; justify-content: center;">
+            <div style="max-width: min(92vw, 1100px); text-align: center;">
+                <p class="reveal"
+                    style="margin-top: var(--element-gap); font-size: clamp(1.4rem, 3vw, 2.4rem); font-style: italic;">
+                    In 2013, Carrascal et al. asked 168 people what they&rsquo;d accept for their browsing
+                    history.
+                </p>
+                <div class="reveal"
+                    style="margin-top: clamp(1.5rem, 4vh, 3rem); font-family: var(--font-body); font-size: clamp(6rem, 22vw, 18rem); font-weight: 700; color: var(--red); line-height: 0.9; letter-spacing: -0.03em;">
+                    &euro;7
+                </div>
+                <p class="reveal"
+                    style="margin-top: clamp(1rem, 2.5vh, 2rem); font-size: clamp(1.4rem, 3vw, 2.4rem); color: var(--text-on-dark); font-weight: 500;">
+                    The median price. <span style="color: var(--red);">The cost of a Big Mac.</span>
+                </p>
+                <div class="slide-links reveal" style="justify-content: center; margin-top: var(--content-gap);">
+                    <a href="https://arxiv.org/abs/1112.6098" target="_blank">Carrascal et al., WWW 2013</a>
+                </div>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: Carrascal et al., &ldquo;Your browsing behavior for a Big Mac&rdquo;, WWW 2013
+        </div>
+        <span class="slide-number">3 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 4: DINNER ORDER — THE PAYOFF
+     =========================================== -->
+    <section class="slide slide-light" data-slide="3">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Last night, 23:03</p>
+            <h2 class="reveal">What did I give my data up for? <span style="color: var(--red);">Dinner.</span></h2>
+            <p class="reveal"
+                style="max-width: min(85vw, 900px); margin-top: var(--element-gap); font-size: clamp(1rem, 1.8vw, 1.4rem); color: var(--text-muted);">
+                An agent we&rsquo;re building at Saint skipped the negotiation for me.
+            </p>
+            <div class="reveal"
+                style="margin-top: var(--content-gap); flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
+                <img src="figures/clawcon.dinner-order.png"
+                    alt="WhatsApp message from Ava: YES! We're on the checkout page. Place delivery order button is enabled. Let me place the order."
+                    style="max-height: min(72vh, 720px); max-width: 100%; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); object-fit: contain;">
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: personal WhatsApp, 2026-04-07 &middot; <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">saint.work</a>
+        </div>
+        <span class="slide-number">4 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 6: BLIPS OF INTEREST — BCI PING
+     =========================================== -->
+    <section class="slide slide-light" data-slide="4">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Two</p>
+            <h2 class="reveal">Blips of interest.</h2>
+            <p class="reveal"
+                style="margin-top: var(--element-gap); font-size: clamp(1rem, 1.8vw, 1.4rem); color: var(--text-muted); font-style: italic;">
+                What I build for at Saint: the system noticing what I didn&rsquo;t ask about.
+            </p>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div class="image-container" style="display: flex; justify-content: center;">
+                    <img src="figures/clawcon.bci-ping.png"
+                        alt="Ava sends an unprompted message about a non-invasive ultrasound BCI startup raising $21M, noting it's adjacent to the user's MIT work."
+                        style="max-height: min(65vh, 560px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                </div>
+                <ul class="bullet-list">
+                    <li>Capture Blips of interest, resurface them and augment them.</li>
+                    <li>Mid&#8209;March, unprompted: a ping about a non&#8209;invasive ultrasound BCI startup raising
+                        &pound;21M.</li>
+                    <li>Adjacent to my old MIT work. The agent knew; I didn&rsquo;t have to tell it.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Sources: personal WhatsApp 2026-03-26 &middot; <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">saint.work</a>; <a href="https://www.patreon.com/posts/towards-scalable-115120980"
+                target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">Matuschak,
+                &ldquo;Towards scalable blip cultivation&rdquo; (2024)</a>
+        </div>
+        <span class="slide-number">5 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 7: SELF-AUTHORED LIFE PULLQUOTE
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="5">
+        <div class="slide-content" style="align-items: center; justify-content: center;">
+            <div style="max-width: min(85vw, 900px);">
+                <p class="eyebrow reveal">Blips of salience</p>
+                <h2 class="reveal"
+                    style="font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: clamp(1.5rem, 3.8vw, 2.8rem); line-height: 1.2;">
+                    &ldquo;The ideas you&rsquo;d otherwise lose become the projects that define you.&rdquo;
+                </h2>
+                <p class="reveal"
+                    style="margin-top: var(--content-gap); color: rgba(232,230,225,0.5); font-size: var(--small-size); text-transform: uppercase; letter-spacing: 0.1em;">
+                    A self-authored life is built from the things you notice.
+                </p>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: Andy Matuschak, <a href="https://www.patreon.com/posts/towards-scalable-115120980" target="_blank"
+                style="color: inherit; border-bottom: 1px dotted currentColor;">&ldquo;Towards scalable blip
+                cultivation&rdquo; (2024)</a> &middot; <a
+                href="https://www.patreon.com/posts/doubling-down-on-143830809" target="_blank"
+                style="color: inherit; border-bottom: 1px dotted currentColor;">&ldquo;Doubling down on blips&rdquo;
+                (2025)</a>
+        </div>
+        <span class="slide-number">6 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 7: YOU ARE NOT NORMAL (opener)
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="6">
+        <div class="slide-content" style="align-items: center; justify-content: center;">
+            <div style="max-width: min(92vw, 1100px); text-align: center;">
+                <p class="eyebrow reveal">Three &mdash; For everyone else</p>
+                <h2 class="reveal"
+                    style="font-size: clamp(2.8rem, 8vw, 6rem); margin-top: var(--element-gap); line-height: 1.05;">
+                    You are not normal.
+                </h2>
+                <p class="reveal"
+                    style="margin-top: var(--content-gap); font-size: clamp(1.2rem, 2.6vw, 2rem); color: rgba(232,230,225,0.75); line-height: 1.35;">
+                    You&rsquo;re at a <strong style="color: var(--red);">lobster&#8209;themed personal&#8209;AI
+                        festival</strong> on a Wednesday night.
+                </p>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: hails.info
+        </div>
+        <span class="slide-number">7 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 9: YOU ARE NOT NORMAL
+     =========================================== -->
+    <section class="slide slide-light" data-slide="7">
+        <div class="slide-content">
+            <p class="eyebrow reveal">&hellip;and neither am I</p>
+            <h2 class="reveal">So I gave it to my mum.</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div class="image-container" style="display: flex; justify-content: center;">
+                    <img src="figures/clawcon.name-choice.png"
+                        alt="Ava describes how the user's mum was the first person to ask if she actually liked her name, and that it felt significant."
+                        style="max-height: min(65vh, 560px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                </div>
+                <ul class="bullet-list">
+                    <li>I ship everything we build at Saint to my mum first.</li>
+                    <li>She cares about one thing the ClawCon crowd rarely tests for: does it feel <em>human</em>?</li>
+                    <li>If it&rsquo;s only delightful to the people in this room, we&rsquo;ve built the wrong thing.
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: personal WhatsApp, 2026-04-02 &middot; <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">saint.work</a>
+        </div>
+        <span class="slide-number">8 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 10: UNGLAMOROUS PLUMBING
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="8">
+        <div class="slide-content">
+            <p class="eyebrow reveal">&hellip;and a slog of unglamorous plumbing</p>
+            <h2 class="reveal">What ready&#8209;for&#8209;mum actually costs</h2>
+            <div class="personality-grid reveal" style="margin-top: var(--content-gap);">
+                <div class="personality-card">
+                    <h3>Sandboxing</h3>
+                    <p class="model-name">Blast&#8209;radius control</p>
+                    <p>A bad tool call can&rsquo;t nuke the machine, leak the filesystem, or reach a network it
+                        shouldn&rsquo;t.</p>
+                </div>
+                <div class="personality-card">
+                    <h3>MITM key proxy</h3>
+                    <p class="model-name">Ambient credentials</p>
+                    <p>The agent uses my Stripe, GitHub, and Google Drive <em>without ever seeing the real keys</em>.
+                        The proxy signs requests; the agent sees capabilities.</p>
+                </div>
+                <div class="personality-card">
+                    <h3>Access&#8209;control tiers</h3>
+                    <p class="model-name">Per&#8209;persona files</p>
+                    <p>Mum&rsquo;s finances and my work repos live on different rungs of the same ladder. Agents cross
+                        rungs only on explicit request.</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: hails.info
+        </div>
+        <span class="slide-number">9 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 11: AS CAPABLE AS YOU — LINKEDIN
+     =========================================== -->
+    <section class="slide slide-light" data-slide="9">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Four</p>
+            <h2 class="reveal">Make it as capable as you.</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div class="image-container" style="display: flex; justify-content: center;">
+                    <img src="figures/clawcon.linkedin-signup.png"
+                        alt="Discord exchange: Ava sends a Kuzco perfect meme, then is asked if she has a LinkedIn. She offers to create one, then successfully navigates the signup flow."
+                        style="max-height: min(65vh, 560px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                </div>
+                <ul class="bullet-list">
+                    <li>One of our agents is now on LinkedIn. It signed itself up.</li>
+                    <li>If it can't sign up to LinkedIn - your browser is not good enough.
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: personal Discord, 2026-03-06 &middot; <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">saint.work</a>
+        </div>
+        <span class="slide-number">10 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 12: THREE PILLARS
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="10">
+        <div class="slide-content">
+            <p class="eyebrow reveal">An agent needs&hellip;</p>
+            <h2 class="reveal">Same capabilities.</h2>
+            <div class="stats-row reveal" style="margin-top: var(--content-gap);">
+                <div class="stat">
+                    <div class="stat-value">Phone</div>
+                    <div class="stat-label">Their own WhatsApp, Discord, Telegram<br><span
+                            style="font-size: 0.85em; opacity: 0.6;">not a bot frontend &mdash; a phone number</span>
+                    </div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">Identity</div>
+                    <div class="stat-label">Their own name, email, accounts<br><span
+                            style="font-size: 0.85em; opacity: 0.6;">not impersonation &mdash; personhood</span></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">Browser</div>
+                    <div class="stat-label">A real Chrome session they own<br><span
+                            style="font-size: 0.85em; opacity: 0.6;">not a scraping API &mdash; cookies, logins,
+                            tabs</span></div>
+                </div>
+            </div>
+            <div class="highlight-box reveal"
+                style="max-width: min(85vw, 900px); margin-top: var(--content-gap); background: rgba(196,78,82,0.15); border-left-color: var(--red);">
+                <p style="color: var(--text-on-dark);">Anything less
+                    is a chatbot in a trenchcoat.</p>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: hails.info
+        </div>
+        <span class="slide-number">11 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 13: WRAP — AGENT-TO-AGENT
+     =========================================== -->
+    <section class="slide slide-light" data-slide="11">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Wrap &mdash; Agent&#8209;to&#8209;agent</p>
+            <h2 class="reveal">Just use a phone number.</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: flex-start;">
+                <div class="image-container" style="display: flex; justify-content: center;">
+                    <img src="figures/clawcon.pr-summary.png"
+                        alt="Ava reporting a summary of 19 issues addressed, 11 PRs created, 8 closed."
+                        style="max-height: min(58vh, 500px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                </div>
+                <div class="image-container" style="display: flex; justify-content: center;">
+                    <img src="figures/clawcon.iris-escalation.png"
+                        alt="Ava messaging her sibling agent Iris on WhatsApp to test a permission escalation flow."
+                        style="max-height: min(58vh, 500px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                </div>
+            </div>
+            <p class="reveal"
+                style="max-width: min(85vw, 900px); margin-top: var(--element-gap); font-size: clamp(0.9rem, 1.5vw, 1.15rem);">
+                While I was on the train here, the agents I build at Saint shipped 19 issues, 11 PRs, and 8 closes. Meet
+                <strong>Ava</strong>, our first-person agent, and <strong>Iris</strong>, her sibling. When Ava needed to
+                test a permission escalation, she didn&rsquo;t call an API &mdash; she messaged Iris. On WhatsApp. With
+                a phone number. No new protocol, no new standard, no new committee &mdash; the substrate has worked
+                since 1992.
+            </p>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: personal WhatsApp, 2026-04-08 &middot; <a href="https://saint.work" target="_blank" style="color: inherit; border-bottom: 1px dotted currentColor;">saint.work</a>
+        </div>
+        <span class="slide-number">12 / 13</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 14: CLOSE — BE THE THING THAT NOTICES
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="12">
+        <div class="slide-content" style="align-items: center; justify-content: center;">
+            <div style="max-width: min(85vw, 900px); text-align: center;">
+                <p class="eyebrow reveal">Four rules for the lobster in your pocket</p>
+                <h2 class="reveal"
+                    style="font-size: clamp(1.4rem, 3.2vw, 2.4rem); margin-top: var(--element-gap); line-height: 1.3;">
+                    1. Make it <span style="color: var(--red);">delightful</span>.<br>
+                    2. Let it <span style="color: var(--red);">notice</span>.<br>
+                    3. Build it for your <span style="color: var(--red);">mum</span>.<br>
+                    4. Give it a <span style="color: var(--red);">phone, an identity, and a browser</span>.
+                </h2>
+            </div>
+        </div>
+        <div class="slide-source">
+            <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 226">
+                <path
+                    d="M107 7a1365 1365 0 0 0-51 99C17 183 6 207 6 210v4c0 2 6 2 104 2h104v-6c-1-5-2-9-7-20a1211 1211 0 0 1-25-52l-8-18-11-24-8-16-13-28a2491 2491 0 0 0-23-46h-12zm19 110 9 19 7 16 7 14 3 8H69l5-11 21-41 17-32c0-1 5 7 14 27z" />
+            </svg>
+            Source: hails.info &middot; ClawCon London 2026
+        </div>
+        <span class="slide-number">13 / 13</span>
+    </section>
+
+
+    <script>
+        /* ===========================================
+           SLIDE PRESENTATION CONTROLLER
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.isScrolling = false;
+                this.setupIntersectionObserver();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheelNav();
+                this.setupProgressBar();
+                this.setupNavDots();
+            }
+
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            const idx = parseInt(entry.target.dataset.slide);
+                            if (!isNaN(idx)) {
+                                this.currentSlide = idx;
+                                this.updateProgressBar();
+                                this.updateNavDots();
+                            }
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+
+            goToSlide(index) {
+                if (index >= 0 && index < this.slides.length) {
+                    this.slides[index].scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.getAttribute('contenteditable') === 'true') return;
+                    switch (e.key) {
+                        case 'ArrowDown':
+                        case 'ArrowRight':
+                        case ' ':
+                        case 'PageDown':
+                            e.preventDefault();
+                            this.goToSlide(this.currentSlide + 1);
+                            break;
+                        case 'ArrowUp':
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            e.preventDefault();
+                            this.goToSlide(this.currentSlide - 1);
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            this.goToSlide(0);
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            this.goToSlide(this.slides.length - 1);
+                            break;
+                    }
+                });
+            }
+
+            setupTouchNav() {
+                let startY = 0;
+                document.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', (e) => {
+                    const dy = startY - e.changedTouches[0].clientY;
+                    if (Math.abs(dy) > 50) {
+                        this.goToSlide(this.currentSlide + (dy > 0 ? 1 : -1));
+                    }
+                }, { passive: true });
+            }
+
+            setupWheelNav() {
+                let lastWheel = 0;
+                document.addEventListener('wheel', (e) => {
+                    const now = Date.now();
+                    if (now - lastWheel < 800) return;
+                    if (Math.abs(e.deltaY) > 30) {
+                        lastWheel = now;
+                        this.goToSlide(this.currentSlide + (e.deltaY > 0 ? 1 : -1));
+                    }
+                }, { passive: true });
+            }
+
+            setupProgressBar() {
+                this.progressBar = document.getElementById('progressBar');
+                this.updateProgressBar();
+            }
+
+            updateProgressBar() {
+                if (this.progressBar) {
+                    const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+                    this.progressBar.style.width = progress + '%';
+                }
+            }
+
+            setupNavDots() {
+                const container = document.getElementById('navDots');
+                if (!container) return;
+                this.slides.forEach((_, i) => {
+                    const dot = document.createElement('button');
+                    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                    dot.addEventListener('click', () => this.goToSlide(i));
+                    container.appendChild(dot);
+                });
+                this.dots = container.querySelectorAll('.nav-dot');
+            }
+
+            updateNavDots() {
+                if (!this.dots) return;
+                this.dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === this.currentSlide);
+                });
+            }
+        }
+
+        /* ===========================================
+           INLINE EDITOR
+           =========================================== */
+        class InlineEditor {
+            constructor() {
+                this.isActive = false;
+                this.editToggle = document.getElementById('editToggle');
+                this.setupHotzone();
+                this.setupKeyboard();
+                this.loadSaved();
+            }
+
+            setupHotzone() {
+                const hotzone = document.getElementById('editHotzone');
+                let hideTimeout = null;
+
+                hotzone.addEventListener('mouseenter', () => {
+                    clearTimeout(hideTimeout);
+                    this.editToggle.classList.add('show');
+                });
+                hotzone.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        if (!this.isActive) this.editToggle.classList.remove('show');
+                    }, 400);
+                });
+                this.editToggle.addEventListener('mouseenter', () => {
+                    clearTimeout(hideTimeout);
+                });
+                this.editToggle.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        if (!this.isActive) this.editToggle.classList.remove('show');
+                    }, 400);
+                });
+                this.editToggle.addEventListener('click', () => this.toggleEditMode());
+                hotzone.addEventListener('click', () => this.toggleEditMode());
+            }
+
+            setupKeyboard() {
+                document.addEventListener('keydown', (e) => {
+                    if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                        this.toggleEditMode();
+                    }
+                    if (e.key === 's' && (e.ctrlKey || e.metaKey) && this.isActive) {
+                        e.preventDefault();
+                        this.save();
+                    }
+                });
+            }
+
+            toggleEditMode() {
+                this.isActive = !this.isActive;
+                this.editToggle.classList.toggle('active', this.isActive);
+                this.editToggle.textContent = this.isActive ? 'Editing (Ctrl+S to save)' : 'Edit';
+
+                document.querySelectorAll('h1, h2, h3, p, li, td, .stat-value, .stat-label, .figure-caption, .eyebrow, .subtitle, .tag').forEach(el => {
+                    if (!el.closest('.nav-dots') && !el.closest('.edit-toggle')) {
+                        el.contentEditable = this.isActive ? 'true' : 'false';
+                    }
+                });
+            }
+
+            save() {
+                const content = document.documentElement.innerHTML;
+                localStorage.setItem('slides-forecastbench', content);
+                const msg = document.createElement('div');
+                msg.textContent = 'Saved!';
+                msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--red);color:#fff;padding:0.5em 1.5em;border-radius:4px;font-family:var(--font-body);z-index:99999;';
+                document.body.appendChild(msg);
+                setTimeout(() => msg.remove(), 1200);
+            }
+
+            loadSaved() {
+                /* Uncomment to enable auto-load from localStorage:
+                const saved = localStorage.getItem('slides-forecastbench');
+                if (saved) document.documentElement.innerHTML = saved;
+                */
+            }
+        }
+
+        /* Initialize */
+        const presentation = new SlidePresentation();
+        const editor = new InlineEditor();
+    </script>
+
+    <!-- Mermaid for decision tree diagram -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            fontFamily: 'IBM Plex Sans',
+        });
+    </script>
+</body>
+
+</html>
