@@ -66,13 +66,29 @@
 </head>
 <body>
     <main>
-        <h1>Protected deck</h1>
-        <p>Enter the access token to open this presentation.</p>
-        <form method="get" action="/internal-agents/">
-            <label for="token">Access token</label>
-            <input id="token" name="token" type="password" autocomplete="off" autofocus>
+        <h1 id="title">Protected deck</h1>
+        <p>Enter the password to open this presentation.</p>
+        <form id="loginForm" method="get" action="/">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="off" autofocus>
             <button type="submit">Open deck</button>
         </form>
     </main>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get('next');
+        const title = params.get('title');
+        const form = document.getElementById('loginForm');
+        const titleElement = document.getElementById('title');
+
+        if (title) {
+            titleElement.textContent = title;
+            document.title = title;
+        }
+
+        if (next && next.startsWith('/')) {
+            form.action = next;
+        }
+    </script>
 </body>
 </html>
