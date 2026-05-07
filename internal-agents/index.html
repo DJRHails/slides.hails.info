@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Serve Internal Agents — J&amp;J Team Walkthrough</title>
+
+    <!-- IBM Plex Sans — matching the Economist chart styling -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (ECONOMIST THEME)
+           =========================================== */
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-card: #ffffff;
+            --bg-warm: #f7f5f0;
+            --red: #c44e52;
+            --red-dark: #a03c3f;
+            --red-light: rgba(196, 78, 82, 0.12);
+            --grey-dark: #3d3d3d;
+            --grey-mid: #8c8c8c;
+            --grey-light: #c8c8c8;
+            --grey-pale: #e8e6e1;
+            --text-dark: #1a1a1a;
+            --text-body: #3d3d3d;
+            --text-muted: #8c8c8c;
+            --text-on-dark: #e8e6e1;
+            --accent-blue: #4c72b0;
+
+            --font-display: 'IBM Plex Serif', serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            --title-size: clamp(2rem, 5.5vw, 4.5rem);
+            --h2-size: clamp(1.4rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1rem, 2vw, 1.5rem);
+            --body-size: clamp(0.8rem, 1.4vw, 1.1rem);
+            --small-size: clamp(0.65rem, 1vw, 0.85rem);
+            --tiny-size: clamp(0.55rem, 0.8vw, 0.7rem);
+            --stat-size: clamp(2rem, 5vw, 4rem);
+
+            --slide-padding: clamp(2rem, 5vw, 5rem);
+            --content-gap: clamp(0.8rem, 2vw, 2rem);
+            --element-gap: clamp(0.4rem, 1vw, 1rem);
+
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+
+            --total-slides: 15;
+        }
+
+        /* ===========================================
+           BASE STYLES
+           =========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            padding-bottom: clamp(2.5rem, 5vw, 4rem);
+        }
+
+        .card,
+        .container,
+        .content-box {
+            max-width: min(90vw, 1000px);
+            max-height: min(80vh, 700px);
+        }
+
+        img,
+        .image-container {
+            max-width: 100%;
+            max-height: min(70vh, 600px);
+            object-fit: contain;
+        }
+
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+                --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+                --h2-size: clamp(1rem, 3vw, 1.75rem);
+            }
+        }
+
+        @media (max-height: 600px) {
+            :root {
+                --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+                --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+                --title-size: clamp(1.1rem, 4vw, 2rem);
+                --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            }
+
+            .nav-dots,
+            .keyboard-hint,
+            .decorative {
+                display: none;
+            }
+        }
+
+        @media (max-height: 500px) {
+            :root {
+                --slide-padding: clamp(0.4rem, 2vw, 1rem);
+                --title-size: clamp(1rem, 3.5vw, 1.5rem);
+                --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+                --body-size: clamp(0.65rem, 1vw, 0.85rem);
+            }
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --title-size: clamp(1.25rem, 7vw, 2.5rem);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        /* ===========================================
+           ECONOMIST THEME STYLES
+           =========================================== */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: var(--slide-padding);
+            width: clamp(30px, 5vw, 50px);
+            height: 4px;
+            background: var(--red);
+            z-index: 10;
+        }
+
+        .slide-dark::before {
+            display: none;
+        }
+
+        .slide-light {
+            background: var(--bg-warm);
+        }
+
+        .slide-dark {
+            background: var(--bg-primary);
+        }
+
+        .slide-dark .slide-content {
+            color: var(--text-on-dark);
+        }
+
+        /* ===========================================
+           SOURCE LINE
+           =========================================== */
+        .slide-source {
+            position: absolute;
+            bottom: clamp(0.7rem, 1.75vw, 1.4rem);
+            left: var(--slide-padding);
+            font-family: var(--font-body);
+            font-size: clamp(0.75rem, 1.3vw, 1.15rem);
+            color: var(--grey-mid);
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            z-index: 5;
+        }
+
+        .slide-source .logo-mark {
+            width: clamp(14px, 1.8vw, 21px);
+            height: clamp(14px, 1.8vw, 21px);
+            flex-shrink: 0;
+        }
+
+        .slide-source .logo-mark path {
+            fill: var(--red);
+        }
+
+        .slide-dark .slide-source {
+            color: rgba(232, 230, 225, 0.3);
+        }
+
+        .slide-dark .slide-source .logo-mark path {
+            fill: rgba(232, 230, 225, 0.3);
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        h1 {
+            font-family: var(--font-display);
+            font-size: var(--title-size);
+            font-weight: 700;
+            line-height: 1.05;
+            color: var(--text-dark);
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: var(--h2-size);
+            font-weight: 600;
+            line-height: 1.15;
+            color: var(--text-dark);
+        }
+
+        h3 {
+            font-family: var(--font-body);
+            font-size: var(--h3-size);
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--text-dark);
+        }
+
+        p,
+        li {
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+            line-height: 1.6;
+            color: var(--text-body);
+        }
+
+        .slide-dark h1,
+        .slide-dark h2,
+        .slide-dark h3 {
+            color: var(--text-on-dark);
+        }
+
+        .slide-dark p,
+        .slide-dark li {
+            color: rgba(232, 230, 225, 0.7);
+        }
+
+        .eyebrow {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--red);
+            margin-bottom: clamp(0.4rem, 1vw, 0.8rem);
+        }
+
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+            font-weight: 300;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ===========================================
+           STAT BLOCKS
+           =========================================== */
+        .stats-row {
+            display: flex;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: clamp(100px, 20vw, 180px);
+        }
+
+        .stat-value {
+            font-family: var(--font-body);
+            font-size: var(--stat-size);
+            font-weight: 700;
+            color: var(--red);
+            line-height: 1;
+            margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem);
+        }
+
+        .stat-label {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .slide-dark .stat-label {
+            color: rgba(232, 230, 225, 0.5);
+        }
+
+        /* ===========================================
+           TABLES
+           =========================================== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+        }
+
+        thead th {
+            text-align: left;
+            font-weight: 600;
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+            border-bottom: 2px solid var(--text-dark);
+            color: var(--text-dark);
+            font-size: var(--small-size);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tbody td {
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+            border-bottom: 1px solid var(--grey-pale);
+            color: var(--text-body);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 2px solid var(--text-dark);
+        }
+
+        .slide-dark thead th {
+            color: var(--text-on-dark);
+            border-bottom-color: var(--text-on-dark);
+        }
+
+        .slide-dark tbody td {
+            color: rgba(232, 230, 225, 0.7);
+            border-bottom-color: rgba(232, 230, 225, 0.15);
+        }
+
+        .slide-dark tbody tr:last-child td {
+            border-bottom-color: var(--text-on-dark);
+        }
+
+        td.highlight {
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        /* ===========================================
+           BULLET LIST
+           =========================================== */
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.9rem, 2vh, 1.6rem);
+        }
+
+        .bullet-list li {
+            padding-left: clamp(1.4rem, 2.6vw, 2rem);
+            position: relative;
+            font-size: clamp(1.3rem, 2.4vw, 2rem);
+            line-height: 1.45;
+        }
+
+        .bullet-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: clamp(0.7rem, 1.3vw, 1rem);
+            width: 10px;
+            height: 10px;
+            background: var(--red);
+        }
+
+        /* Smaller variant for denser content */
+        .bullet-list-sm {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.5rem, 1.2vh, 1rem);
+        }
+
+        .bullet-list-sm li {
+            padding-left: clamp(1.2rem, 2vw, 1.6rem);
+            position: relative;
+            font-size: clamp(0.9rem, 1.6vw, 1.3rem);
+            line-height: 1.45;
+        }
+
+        .bullet-list-sm li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: clamp(0.5rem, 0.9vw, 0.7rem);
+            width: 8px;
+            height: 8px;
+            background: var(--red);
+        }
+
+        /* ===========================================
+           CODE BLOCKS
+           =========================================== */
+        .code-block {
+            background: #2d2d2d;
+            border-radius: 6px;
+            padding: clamp(0.8rem, 2vw, 1.5rem);
+            overflow-x: auto;
+            margin-top: var(--element-gap);
+        }
+
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            color: #e8e6e1;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #8c8c8c;
+        }
+
+        .code-block .keyword {
+            color: #c44e52;
+        }
+
+        .code-block .string {
+            color: #7ec699;
+        }
+
+        .code-block .flag {
+            color: #4c72b0;
+        }
+
+        code.inline {
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+            background: rgba(196, 78, 82, 0.08);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            color: var(--red-dark);
+        }
+
+        .slide-dark code.inline {
+            background: rgba(232, 230, 225, 0.08);
+            color: var(--red);
+        }
+
+        /* ===========================================
+           FLOW DIAGRAM
+           =========================================== */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.3rem, 0.8vw, 0.6rem);
+            flex-wrap: wrap;
+            margin-top: var(--content-gap);
+        }
+
+        .flow-step {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(232, 230, 225, 0.15);
+            border-radius: 6px;
+            padding: clamp(0.4rem, 1vw, 0.8rem) clamp(0.6rem, 1.5vw, 1.2rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--text-on-dark);
+            white-space: nowrap;
+        }
+
+        .flow-step.highlight {
+            background: var(--red-light);
+            border-color: var(--red);
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            font-size: clamp(0.8rem, 1.4vw, 1.2rem);
+            color: rgba(232, 230, 225, 0.3);
+        }
+
+        /* ===========================================
+           PERSONA CARDS
+           =========================================== */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 25vw, 200px), 1fr));
+            gap: clamp(0.6rem, 1.5vw, 1.2rem);
+            margin-top: var(--content-gap);
+        }
+
+        .persona-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(232, 230, 225, 0.1);
+            border-radius: 8px;
+            padding: clamp(0.6rem, 1.5vw, 1.2rem);
+        }
+
+        .persona-card h3 {
+            color: var(--text-on-dark);
+            font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+            margin-bottom: clamp(0.1rem, 0.3vw, 0.2rem);
+        }
+
+        .persona-card .role {
+            font-family: var(--font-body);
+            font-size: var(--tiny-size);
+            color: var(--red);
+            font-weight: 600;
+            margin-bottom: clamp(0.2rem, 0.5vw, 0.3rem);
+        }
+
+        .persona-card p {
+            font-size: var(--tiny-size);
+            color: rgba(232, 230, 225, 0.5);
+        }
+
+        /* ===========================================
+           FILE TREE
+           =========================================== */
+        .file-tree {
+            font-family: var(--font-mono);
+            font-size: clamp(0.75rem, 1.3vw, 1rem);
+            line-height: 1.8;
+            color: var(--text-on-dark);
+        }
+
+        .file-tree .dir {
+            color: var(--accent-blue);
+        }
+
+        .file-tree .file {
+            color: rgba(232, 230, 225, 0.7);
+        }
+
+        .file-tree .desc {
+            color: rgba(232, 230, 225, 0.35);
+            font-family: var(--font-body);
+            font-size: 0.85em;
+        }
+
+        /* ===========================================
+           SLIDE NUMBER
+           =========================================== */
+        .slide-number {
+            position: absolute;
+            bottom: clamp(0.7rem, 1.75vw, 1.4rem);
+            right: clamp(1.5rem, 4vw, 3rem);
+            font-family: var(--font-body);
+            font-size: clamp(0.75rem, 1.3vw, 1.15rem);
+            color: var(--grey-mid);
+            z-index: 5;
+        }
+
+        .slide-dark .slide-number {
+            color: rgba(232, 230, 225, 0.3);
+        }
+
+        /* ===========================================
+           ANIMATIONS
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide.visible .reveal:nth-child(1) {
+            transition-delay: 0.05s;
+        }
+
+        .slide.visible .reveal:nth-child(2) {
+            transition-delay: 0.15s;
+        }
+
+        .slide.visible .reveal:nth-child(3) {
+            transition-delay: 0.25s;
+        }
+
+        .slide.visible .reveal:nth-child(4) {
+            transition-delay: 0.35s;
+        }
+
+        .slide.visible .reveal:nth-child(5) {
+            transition-delay: 0.45s;
+        }
+
+        .slide.visible .reveal:nth-child(6) {
+            transition-delay: 0.55s;
+        }
+
+        /* ===========================================
+           PROGRESS BAR
+           =========================================== */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--red);
+            z-index: 9999;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* ===========================================
+           NAV DOTS
+           =========================================== */
+        .nav-dots {
+            position: fixed;
+            right: clamp(0.8rem, 2vw, 1.5rem);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vh, 10px);
+            z-index: 9998;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--grey-light);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .nav-dot.active {
+            background: var(--red);
+            transform: scale(1.3);
+        }
+
+        /* ===========================================
+           TITLE SLIDE
+           =========================================== */
+        .title-slide .slide-content {
+            justify-content: flex-end;
+            padding-bottom: clamp(3rem, 8vw, 8rem);
+        }
+
+        .title-slide h1 {
+            color: var(--text-on-dark);
+            max-width: min(80vw, 800px);
+        }
+
+        .title-slide .subtitle {
+            color: rgba(232, 230, 225, 0.5);
+            max-width: min(70vw, 600px);
+            margin-top: clamp(0.5rem, 1.5vw, 1rem);
+        }
+
+        .title-slide .tag {
+            display: inline-block;
+            margin-top: clamp(1rem, 2.5vw, 2rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            color: var(--red);
+            border: 1.5px solid var(--red);
+            padding: 0.35em 1em;
+            border-radius: 2px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .title-slide .author {
+            margin-top: clamp(0.5rem, 1vw, 0.8rem);
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: rgba(232, 230, 225, 0.4);
+        }
+
+        /* Two-column layout */
+        .two-col {
+            display: flex;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            align-items: flex-start;
+        }
+
+        .two-col>* {
+            flex: 1;
+        }
+
+        @media (max-width: 700px) {
+            .two-col {
+                flex-direction: column;
+            }
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: var(--red-light);
+            border-left: 3px solid var(--red);
+            padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.5rem);
+            border-radius: 0 4px 4px 0;
+            margin-top: clamp(0.5rem, 1vw, 1rem);
+        }
+
+        .highlight-box p {
+            font-size: var(--small-size);
+            color: var(--red-dark);
+            font-weight: 500;
+        }
+
+        .slide-dark .highlight-box {
+            background: rgba(196, 78, 82, 0.15);
+            border-left-color: var(--red);
+        }
+
+        .slide-dark .highlight-box p {
+            color: var(--red);
+        }
+
+        /* ===========================================
+           INLINE EDITING
+           =========================================== */
+        .edit-hotzone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+
+        .edit-toggle {
+            position: fixed;
+            top: clamp(0.8rem, 2vw, 1.2rem);
+            left: clamp(0.8rem, 2vw, 1.2rem);
+            background: var(--bg-card);
+            border: 1.5px solid var(--grey-light);
+            border-radius: 4px;
+            padding: 0.4em 0.7em;
+            font-size: var(--small-size);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            font-family: var(--font-body);
+            color: var(--text-body);
+        }
+
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .edit-toggle.active {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+
+        [contenteditable="true"] {
+            outline: 1px dashed var(--red);
+            outline-offset: 2px;
+            cursor: text;
+        }
+
+        /* ===========================================
+           LINKS
+           =========================================== */
+        .slide-links {
+            display: flex;
+            gap: clamp(0.6rem, 1.5vw, 1.2rem);
+            flex-wrap: wrap;
+            margin-top: clamp(0.4rem, 1vw, 0.8rem);
+        }
+
+        .slide-links a {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--red);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .slide-links a:hover {
+            border-bottom-color: var(--red);
+        }
+
+        .slide-links a::before {
+            content: '\2192\00a0';
+        }
+
+        .slide-dark .slide-links a {
+            color: var(--red);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Progress bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Nav dots -->
+    <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+    <!-- Inline editing controls -->
+    <div class="edit-hotzone" id="editHotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">Edit</button>
+
+    <!-- ===========================================
+     SLIDE 1: TITLE
+     =========================================== -->
+    <section class="slide slide-dark title-slide" data-slide="0">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Internal tooling &middot; ~20 min walkthrough</p>
+            <h1 class="reveal" style="font-size: clamp(2.5rem, 8vw, 7rem); line-height: 0.95; max-width: 95vw;">
+                Self-Serve<br>Internal Agents</h1>
+            <p class="subtitle reveal">How to spin up your own AI teammate &mdash; no infra knowledge required.</p>
+            <span class="tag reveal">J&amp;J Engineering</span>
+            <div class="author reveal">Daniel Hails &middot; May 2026</div>
+        </div>
+        <span class="slide-number">1 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 2: IN ACTION — SCREENSHOTS
+     =========================================== -->
+    <section class="slide slide-light" data-slide="1">
+        <div class="slide-content">
+            <p class="eyebrow reveal">In action</p>
+            <h2 class="reveal">What it looks like day-to-day</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+                    <img src="figures/slack-jane-reply.png"
+                        alt="Jane bot replying in Slack about a pipeline update from Matt at Lunar"
+                        style="max-height: min(35vh, 300px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                    <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic;">
+                        Jane proactively relaying a client reply
+                    </p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+                    <img src="figures/slack-jo-research.png"
+                        alt="Jo agent doing research in Slack, pulling Datadog metrics"
+                        style="max-height: min(35vh, 300px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                    <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic;">
+                        Jo pulling Datadog numbers to answer an @mention
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://app.slack.com/client/T08K80X9NCQ/C0AV9UJQPN3" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">#engineering channel</a>
+        </div>
+        <span class="slide-number">2 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 3: MORE IN ACTION — COMPLEX TASKS
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="2">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Real examples</p>
+            <h2 class="reveal">Agents handling complex, multi-step work</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: flex-start;">
+                <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+                    <img src="figures/slack-jane-escalation.png"
+                        alt="Jane agent filing a Linear ticket, drafting a customer reply, and escalating to humans"
+                        style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
+                        Jane: escalation &rarr; filed JAC-1930 &rarr; drafted customer reply &rarr; flagged to humans
+                    </p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+                    <img src="figures/slack-jo-bug-investigation.png"
+                        alt="Jo investigating a bug report by looking up user data and tracing through conversation history"
+                        style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
+                        Jo: investigated a bug, found root cause, reported identifiers and findings
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://app.slack.com/client/T08K80X9NCQ/C0AV9UJQPN3" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">Slack workspace</a>
+        </div>
+        <span class="slide-number">3 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 4: THE STACK
+     =========================================== -->
+    <section class="slide slide-light" data-slide="3">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Architecture</p>
+            <h2 class="reveal">Terminology</h2>
+            <div style="margin-top: var(--content-gap); max-width: min(90vw, 900px);">
+                <table class="reveal">
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>What it does</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="highlight">Turret</td>
+                            <td>Orchestrates sandbox lifecycle, routes messages, manages threads (CF Workers + Durable
+                                Objects)</td>
+                        </tr>
+                        <tr>
+                            <td class="highlight">E2B microVM</td>
+                            <td>The actual compute &mdash; a full Linux box where the agent runs shell commands</td>
+                        </tr>
+                        <tr>
+                            <td class="highlight">Turnstile</td>
+                            <td>Credential proxy &mdash; rewrites placeholder keys to real ones, enforces spend caps
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="highlight">.agents/</td>
+                            <td>Personas, skills, and shared tools &mdash; checked into the repo</td>
+                        </tr>
+                        <tr>
+                            <td class="highlight">Slack bots</td>
+                            <td>13 named bots that relay messages between humans and sandboxes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--content-gap);">
+                <a href="https://e2b.dev" target="_blank">E2B (sandbox provider)</a>
+                <a href="https://developers.cloudflare.com/durable-objects/" target="_blank">Cloudflare Durable Objects</a>
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/experiments/turret" target="_blank">Turret source</a>
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/experiments/turnstile" target="_blank">Turnstile source</a>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/experiments" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">experiments/turret/ &middot; experiments/turnstile/</a>
+        </div>
+        <span class="slide-number">4 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 5: ROUTING — HOW MESSAGES FLOW
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="4">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Message routing</p>
+            <h2 class="reveal">From @mention to running code</h2>
+            <div class="flow reveal" style="margin-top: var(--content-gap);">
+                <span class="flow-step">Slack @mention</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-step">Turret webhook</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-step highlight">routing.yaml</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-step">Persona loaded</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-step">Sandbox boots</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-step">Agent works</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-step">Reply in thread</span>
+            </div>
+            <ul class="bullet-list-sm reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 800px);">
+                <li><strong style="color: var(--text-on-dark);">@mention catch-all:</strong> any @bot in any channel
+                    dispatches to that bot &mdash; no config needed</li>
+                <li><strong style="color: var(--text-on-dark);">Per-channel bindings:</strong> dedicated channels
+                    hard-wired to specific agents</li>
+                <li><strong style="color: var(--text-on-dark);">DMs:</strong> route to whichever bot you messaged
+                    directly</li>
+                <li><strong style="color: var(--text-on-dark);">Proactive channels:</strong> agents post unprompted updates
+                    (<a href="https://app.slack.com/client/T08K80X9NCQ/C0AV9UJQPN3" target="_blank" style="color: var(--red);">see #engineering</a>)</li>
+            </ul>
+            <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 600px);">
+                <p>Key insight: if you @jesse in any channel, Jesse&rsquo;s sandbox boots. Zero routing config needed
+                    for basic usage.</p>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--element-gap);">
+                <a href="https://jackandjillai.slack.com/archives/C0AV9UJQPN3/p1778172603251489" target="_blank">General Agent Townhall</a>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/blob/main/experiments/turret/worker/src/channels/routing.yaml" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">routing.yaml</a>
+        </div>
+        <span class="slide-number">5 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 6: DASHBOARD — LIVE EXAMPLE
+     =========================================== -->
+    <section class="slide slide-light" data-slide="5">
+        <div class="slide-content" style="align-items: center;">
+            <p class="eyebrow reveal">See it working</p>
+            <h2 class="reveal" style="text-align: center;">The dashboard shows everything</h2>
+            <p class="reveal"
+                style="text-align: center; margin-top: var(--element-gap); color: var(--text-muted); max-width: min(80vw, 700px);">
+                Every command, file read, tool call, and decision. Full transparency into what the agent did and why.
+            </p>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div style="display: flex; justify-content: center;">
+                    <img src="figures/dashboard-provisioning.png"
+                        alt="Turret dashboard showing sandbox provisioning steps with timing"
+                        style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                </div>
+                <div>
+                    <div style="background: #2d2d2d; border-radius: 8px; padding: clamp(0.8rem, 2vw, 1.5rem);">
+                        <p
+                            style="font-family: var(--font-mono); font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); margin-bottom: 0.6em;">
+                            LIVE THREAD</p>
+                        <p style="font-family: var(--font-mono); font-size: var(--body-size); color: #e8e6e1;">
+                            <span style="color: var(--red);">thread:</span> linear::JAC-1904<br>
+                            <span style="color: var(--red);">query:</span> unify<br>
+                            <span style="color: var(--red);">agent:</span> jo<br>
+                            <span style="color: var(--red);">status:</span> <span
+                                style="color: #7ec699;">completed</span>
+                        </p>
+                    </div>
+                    <ul class="bullet-list-sm" style="margin-top: var(--element-gap);">
+                        <li>Full provisioning timeline with step durations</li>
+                        <li>Sandbox clone, credential injection, agent boot</li>
+                        <li>Complete command transcript after completion</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--content-gap); justify-content: center;">
+                <a href="https://joeand.jackandjill.ai" target="_blank">Dashboard: joeand.jackandjill.ai</a>
+                <a href="https://joeand.jackandjill.ai/thread/linear::JAC-1904?q=unify" target="_blank">Example thread: JAC-1904</a>
+                <a href="https://joeand.jackandjill.ai/automations" target="_blank">Automations</a>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://joeand.jackandjill.ai" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">joeand.jackandjill.ai</a>
+        </div>
+        <span class="slide-number">6 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 7: AUTOMATIONS
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="6">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Scheduled work</p>
+            <h2 class="reveal">Automations &mdash; agents on a schedule</h2>
+            <p class="reveal"
+                style="margin-top: var(--element-gap); font-size: clamp(1rem, 1.8vw, 1.4rem); color: rgba(232, 230, 225, 0.6);">
+                Not everything is reactive. Agents can also run on cron schedules &mdash; monitoring,
+                reporting, proactive outreach.
+            </p>
+            <ul class="bullet-list-sm reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 800px);">
+                <li><strong style="color: var(--text-on-dark);">Juno:</strong> funnel health checks every 4 hours &mdash; flags anomalies to #product</li>
+                <li><strong style="color: var(--text-on-dark);">Jane:</strong> monitors Front inbox &mdash; escalates stale conversations proactively</li>
+                <li><strong style="color: var(--text-on-dark);">Jo:</strong> posts PR summaries and Grain API announcements to engineering channels</li>
+            </ul>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+                    <img src="figures/slack-jo-grain-announcement.png"
+                        alt="Jo announcing Grain API support merge with clear next steps"
+                        style="max-height: min(30vh, 250px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
+                        Jo proactively announcing a merged feature with next steps
+                    </p>
+                </div>
+                <div>
+                    <div class="highlight-box">
+                        <p>Configure automations at the dashboard &mdash; no code required for scheduling.</p>
+                    </div>
+                    <div class="slide-links" style="margin-top: var(--element-gap);">
+                        <a href="https://joeand.jackandjill.ai/automations" target="_blank">Manage automations</a>
+                        <a href="https://app.slack.com/client/T08K80X9NCQ/C0AV9UJQPN3" target="_blank">See proactive posts in #engineering</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://joeand.jackandjill.ai/automations" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">joeand.jackandjill.ai/automations</a>
+        </div>
+        <span class="slide-number">7 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 8: ANATOMY OF AN AGENT
+     =========================================== -->
+    <section class="slide slide-light" data-slide="7">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Agent anatomy</p>
+            <h2 class="reveal">Four files define an agent</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap);">
+                <div class="file-tree" style="color: var(--text-dark);">
+                    <span class="dir" style="color: var(--accent-blue);">.agents/agents/jesse/</span><br>
+                    &nbsp;&nbsp;<span class="file" style="color: var(--text-body);">AGENTS.md</span> <span class="desc" style="color: var(--text-muted);">&larr; identity, model, env vars</span><br>
+                    &nbsp;&nbsp;<span class="file" style="color: var(--text-body);">SOUL.md</span> <span class="desc" style="color: var(--text-muted);">&larr; voice and style</span><br>
+                    &nbsp;&nbsp;<span class="file" style="color: var(--text-body);">MEMORY.md</span> <span class="desc" style="color: var(--text-muted);">&larr; cross-session context (auto)</span><br>
+                    &nbsp;&nbsp;<span class="file" style="color: var(--grey-mid);">BOOTSTRAP.md</span> <span class="desc" style="color: var(--text-muted);">&larr; only if unconfigured</span>
+                </div>
+                <div>
+                    <ul class="bullet-list-sm">
+                        <li><strong>AGENTS.md</strong> &mdash; the manifest: model, credentials, responsibilities</li>
+                        <li><strong>SOUL.md</strong> &mdash; personality: tone, verbosity, constraints</li>
+                        <li><strong>MEMORY.md</strong> &mdash; accumulates context across sessions automatically</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 600px);">
+                <p>All checked into git. Change a persona with a PR. No deploy needed &mdash; Turret reads the latest
+                    on next boot.</p>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--element-gap);">
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/agents" target="_blank">Browse agent personas on GitHub</a>
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/agents/jesse" target="_blank">Jesse (unconfigured)</a>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/agents" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">.agents/agents/</a>
+        </div>
+        <span class="slide-number">8 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 9: SKILLS & TOOLS
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="8">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Capabilities</p>
+            <h2 class="reveal">Skills and tools give agents superpowers</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap);">
+                <div>
+                    <h3 style="margin-bottom: var(--element-gap); color: var(--text-on-dark);">Shared tools <code class="inline">.agents/tools/</code></h3>
+                    <ul class="bullet-list-sm">
+                        <li><code class="inline">datadog_api.py</code> &mdash; log search, traces, aggregation</li>
+                        <li><code class="inline">github_api.py</code> &mdash; PRs, issues, reviews</li>
+                        <li><code class="inline">slack_api.py</code> &mdash; channel history, posting</li>
+                        <li><code class="inline">turret_exec.py</code> &mdash; exec into live sandboxes</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: var(--element-gap); color: var(--text-on-dark);">Skills <code class="inline">.agents/skills/</code></h3>
+                    <ul class="bullet-list-sm">
+                        <li><strong style="color: var(--text-on-dark);">turret-debug</strong> &mdash; thread failure playbook</li>
+                        <li><strong style="color: var(--text-on-dark);">slack</strong> &mdash; formatting, rate limits, API ref</li>
+                        <li><strong style="color: var(--text-on-dark);">implement</strong> &mdash; structured coding workflow</li>
+                        <li><strong style="color: var(--text-on-dark);">research</strong> &mdash; search and summarize patterns</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 700px);">
+                <p>Skills are loaded on demand &mdash; like &ldquo;if you need to do X, here&rsquo;s
+                    how&rdquo; documents injected into the agent&rsquo;s context.</p>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--element-gap);">
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/skills" target="_blank">Browse skills on GitHub</a>
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/tools" target="_blank">Browse tools on GitHub</a>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">.agents/skills/ &middot; .agents/tools/</a>
+        </div>
+        <span class="slide-number">9 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 10: BOT ROSTER
+     =========================================== -->
+    <section class="slide slide-light" data-slide="9">
+        <div class="slide-content">
+            <p class="eyebrow reveal">The roster</p>
+            <h2 class="reveal">13 bots &mdash; pick one and configure it</h2>
+            <div class="persona-grid reveal" style="margin-top: var(--content-gap);">
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jack</h3>
+                    <div class="role">Candidate-facing</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jill</h3>
+                    <div class="role">Recruiter-facing</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jo</h3>
+                    <div class="role">General-purpose</div>
+                </div>
+                <div class="persona-card" style="border: 2px solid var(--red); background: var(--red-light);">
+                    <h3 style="color: var(--text-dark);">Jesse</h3>
+                    <div class="role">Unconfigured &rarr; yours!</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Julia</h3>
+                    <div class="role">Placeholder</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Joy</h3>
+                    <div class="role">UI/UX test</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jinx</h3>
+                    <div class="role">Red-team security</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jane</h3>
+                    <div class="role">Customer support</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jerome</h3>
+                    <div class="role">Abuse moderator</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Juno</h3>
+                    <div class="role">Product monitoring</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jeeves</h3>
+                    <div class="role">Customer success</div>
+                </div>
+                <div class="persona-card" style="background: rgba(0,0,0,0.02); border: 1px solid var(--grey-pale);">
+                    <h3 style="color: var(--text-dark);">Jackson</h3>
+                    <div class="role">Product issues</div>
+                </div>
+            </div>
+            <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(88vw, 860px);">
+                <p>Process: pick an available bot, add yourself in <code class="inline">.agents/users.yaml</code>, then create or update that bot&rsquo;s persona in <code class="inline">.agents/agents/&lt;name&gt;/</code>. After that, just @mention the bot in Slack to test it.</p>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--element-gap);">
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/blob/main/.agents/users.yaml" target="_blank">.agents/users.yaml</a>
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/scripts/bots/slack" target="_blank">scripts/bots/slack/</a>
+                <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/agents" target="_blank">.agents/agents/</a>
+            </div>
+        </div>
+        <div class="slide-source">
+            <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/blob/main/.agents/users.yaml" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">.agents/users.yaml</a>
+        </div>
+        <span class="slide-number">10 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 11: WORKED EXAMPLE — JESSE
+     =========================================== -->
+    <section class="slide slide-light" data-slide="10">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Worked example</p>
+            <h2 class="reveal">Configure Jesse as an office agent</h2>
+            <p class="reveal" style="color: var(--text-muted); margin-top: var(--element-gap);">
+                Responds to @mentions, sends emails with requester CC&rsquo;d, does light research.
+            </p>
+            <div class="reveal" style="margin-top: var(--content-gap);">
+                <h3 style="margin-bottom: var(--element-gap);">Step 1: Set up Google credentials</h3>
+                <div class="code-block">
+                    <code><span class="comment"># Install gog CLI (one-time)</span>
+<span class="keyword">brew install</span> gog
+
+<span class="comment"># Point at your OAuth client JSON</span>
+<span class="keyword">gog auth credentials set</span> ~/path/to/client_secret.json
+
+<span class="comment"># Authorize the sending account</span>
+<span class="keyword">gog auth add</span> office@jackandjill.ai</code>
+                </div>
+            </div>
+            <div class="reveal" style="margin-top: var(--content-gap);">
+                <h3 style="margin-bottom: var(--element-gap);">Step 2: Claim the bot + edit the persona</h3>
+                <div class="code-block">
+                    <code><span class="comment"># .agents/users.yaml</span>
+<span class="keyword">daniel:</span>
+  <span class="keyword">slack_bot:</span> <span class="string">jesse</span>
+
+<span class="comment"># .agents/agents/jesse/AGENTS.md (frontmatter)</span>
+<span class="keyword">name:</span> jesse
+<span class="keyword">description:</span> <span class="string">Office admin &mdash; email, scheduling, research</span>
+<span class="keyword">model:</span> openai/gpt-5.5
+<span class="keyword">env:</span> [ANTHROPIC_API_KEY, OPENAI_API_KEY, SLACK_BOT_TOKEN, GOOGLE_CREDENTIALS]</code>
+                </div>
+            </div>
+        </div>
+        <span class="slide-number">11 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 12: WORKED EXAMPLE — TESTING
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="11">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Worked example (continued)</p>
+            <h2 class="reveal">Test it in Slack</h2>
+            <div class="reveal"
+                style="margin-top: var(--content-gap); background: rgba(255,255,255,0.03); border: 1px solid rgba(232,230,225,0.1); border-radius: 8px; padding: clamp(1rem, 2.5vw, 2rem); max-width: min(85vw, 700px);">
+                <p style="font-size: clamp(1.1rem, 2vw, 1.6rem); color: var(--text-on-dark); font-style: italic;">
+                    &ldquo;@Jesse can you send a quick email to daniel@jackandjill.ai
+                    saying the standup notes are ready? CC me.&rdquo;
+                </p>
+            </div>
+            <ul class="bullet-list-sm reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 700px);">
+                <li>Sandbox boots with persona + credentials</li>
+                <li>Agent composes email via <code class="inline">gog send</code></li>
+                <li>CC&rsquo;s the requester (pulled from Slack user profile)</li>
+                <li>Confirms delivery in-thread</li>
+            </ul>
+            <div class="reveal" style="margin-top: var(--content-gap);">
+                <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.4);">
+                    Total setup time: ~5 minutes of file edits. No deploy. No infra ticket.
+                </p>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--element-gap);">
+                <a href="https://joeand.jackandjill.ai/thread/pi::web::jdm5kd" target="_blank">Here&rsquo;s one I made earlier &mdash; live thread</a>
+            </div>
+        </div>
+        <span class="slide-number">12 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 13: WHAT WORKS / WHAT DOESN'T
+     =========================================== -->
+    <section class="slide slide-light" data-slide="12">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Expectations</p>
+            <h2 class="reveal">What works well vs. what doesn&rsquo;t</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap);">
+                <div>
+                    <h3 style="color: #2a7d3f; margin-bottom: var(--element-gap);">Works well</h3>
+                    <ul class="bullet-list-sm">
+                        <li>Defined, repeatable tasks with clear success criteria</li>
+                        <li>Slack-native async workflows (questions, requests)</li>
+                        <li>&ldquo;Send this email&rdquo;, &ldquo;Look up X in Datadog&rdquo;, &ldquo;Summarize this
+                            PR&rdquo;</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--red); margin-bottom: var(--element-gap);">Doesn&rsquo;t work (yet)</h3>
+                    <ul class="bullet-list-sm">
+                        <li>Multi-hour workflows (sandbox lifetime limits)</li>
+                        <li>Ambiguous judgment calls (blocks or guesses wrong)</li>
+                        <li>Browser interaction (no GUI in sandbox)</li>
+                        <li>Direct production DB access (credentials scoped)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="reveal" style="margin-top: var(--content-gap);">
+                <img src="figures/slack-shoutout.png"
+                    alt="Team shoutout in Slack: Getting our internal agents up and running, code review agent head and shoulders above any other service"
+                    style="max-height: min(25vh, 200px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            </div>
+        </div>
+        <span class="slide-number">13 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 14: FAILURE MODES — SCREENSHOTS
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="13">
+        <div class="slide-content">
+            <p class="eyebrow reveal">When things go wrong</p>
+            <h2 class="reveal">Transparent failure &mdash; you can always see why</h2>
+            <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
+                <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
+                    <img src="figures/slack-no-reply-failure.png"
+                        alt="User messaging a bot that didn't reply — common failure mode when sandbox fails to boot"
+                        style="max-height: min(35vh, 300px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
+                        No reply failure &mdash; sandbox didn&rsquo;t boot, visible in dashboard
+                    </p>
+                </div>
+                <div>
+                    <ul class="bullet-list-sm">
+                        <li><strong style="color: var(--text-on-dark);">No reply?</strong> Sandbox failed to boot &mdash; check Turret logs on dashboard</li>
+                        <li><strong style="color: var(--text-on-dark);">Empty turns?</strong> Credential issue &mdash; Turnstile rejected the sentinel key</li>
+                        <li><strong style="color: var(--text-on-dark);">Wrong answer?</strong> Check HANDOFF.md &mdash; what context did it have?</li>
+                        <li><strong style="color: var(--text-on-dark);">Infinite loop?</strong> Agent retrying a failing command &mdash; kill the thread</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: var(--content-gap);">
+                        <p>Every failure is debuggable. The thread transcript shows every command that ran.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-links reveal" style="margin-top: var(--element-gap);">
+                <a href="https://joeand.jackandjill.ai" target="_blank">Check thread transcripts on dashboard</a>
+            </div>
+        </div>
+        <span class="slide-number">14 / 15</span>
+    </section>
+
+    <!-- ===========================================
+     SLIDE 15: QUICK REFERENCE / CTA
+     =========================================== -->
+    <section class="slide slide-dark" data-slide="14">
+        <div class="slide-content">
+            <p class="eyebrow reveal">Get started</p>
+            <h2 class="reveal">Quick reference</h2>
+            <div style="margin-top: var(--content-gap); max-width: min(90vw, 800px);">
+                <table class="reveal">
+                    <thead>
+                        <tr>
+                            <th>What</th>
+                            <th>Where</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Dashboard</td>
+                            <td><a href="https://joeand.jackandjill.ai" target="_blank"
+                                    style="color: var(--red);">joeand.jackandjill.ai</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Automations</td>
+                            <td><a href="https://joeand.jackandjill.ai/automations" target="_blank"
+                                    style="color: var(--red);">joeand.jackandjill.ai/automations</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Agent personas</td>
+                            <td><a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/agents" target="_blank"
+                                    style="color: var(--red);">.agents/agents/&lt;name&gt;/</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Skills</td>
+                            <td><a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/skills" target="_blank"
+                                    style="color: var(--red);">.agents/skills/</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Shared tools</td>
+                            <td><a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/tools" target="_blank"
+                                    style="color: var(--red);">.agents/tools/</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Routing rules</td>
+                            <td><a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/blob/main/experiments/turret/worker/src/channels/routing.yaml" target="_blank"
+                                    style="color: var(--red);">routing.yaml</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Proactivity demo</td>
+                            <td><a href="https://app.slack.com/client/T08K80X9NCQ/C0AV9UJQPN3" target="_blank"
+                                    style="color: var(--red);">#engineering channel</a></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-on-dark);">Example threads</td>
+                            <td><a href="https://joeand.jackandjill.ai/thread/linear::JAC-1904?q=unify" target="_blank"
+                                    style="color: var(--red);">JAC-1904</a> &middot; <a href="https://joeand.jackandjill.ai/thread/pi::web::jdm5kd" target="_blank"
+                                    style="color: var(--red);">gog demo</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="reveal" style="margin-top: var(--content-gap);">
+                <p style="font-size: clamp(1rem, 1.8vw, 1.4rem); color: var(--text-on-dark); font-weight: 500;">
+                    Questions? <span style="color: var(--red);">@jo</span> in any channel &mdash; it&rsquo;s the
+                    general-purpose agent and a good first port of call.
+                </p>
+            </div>
+        </div>
+        <span class="slide-number">15 / 15</span>
+    </section>
+
+    <!-- ===========================================
+       JAVASCRIPT — Presentation engine
+       =========================================== -->
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.setupIntersectionObserver();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheelNav();
+                this.setupProgressBar();
+                this.setupNavDots();
+            }
+
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            const idx = parseInt(entry.target.dataset.slide);
+                            if (!isNaN(idx)) {
+                                this.currentSlide = idx;
+                                this.updateProgressBar();
+                                this.updateNavDots();
+                            }
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+
+            goToSlide(index) {
+                if (index >= 0 && index < this.slides.length) {
+                    this.slides[index].scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.getAttribute('contenteditable') === 'true') return;
+                    switch (e.key) {
+                        case 'ArrowDown':
+                        case 'ArrowRight':
+                        case ' ':
+                        case 'PageDown':
+                            e.preventDefault();
+                            this.goToSlide(this.currentSlide + 1);
+                            break;
+                        case 'ArrowUp':
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            e.preventDefault();
+                            this.goToSlide(this.currentSlide - 1);
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            this.goToSlide(0);
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            this.goToSlide(this.slides.length - 1);
+                            break;
+                    }
+                });
+            }
+
+            setupTouchNav() {
+                let startY = 0;
+                document.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+                document.addEventListener('touchend', (e) => {
+                    const dy = startY - e.changedTouches[0].clientY;
+                    if (Math.abs(dy) > 50) {
+                        this.goToSlide(this.currentSlide + (dy > 0 ? 1 : -1));
+                    }
+                }, { passive: true });
+            }
+
+            setupWheelNav() {
+                let lastWheel = 0;
+                document.addEventListener('wheel', (e) => {
+                    const now = Date.now();
+                    if (now - lastWheel < 800) return;
+                    if (Math.abs(e.deltaY) > 30) {
+                        lastWheel = now;
+                        this.goToSlide(this.currentSlide + (e.deltaY > 0 ? 1 : -1));
+                    }
+                }, { passive: true });
+            }
+
+            setupProgressBar() {
+                this.progressBar = document.getElementById('progressBar');
+                this.updateProgressBar();
+            }
+
+            updateProgressBar() {
+                if (this.progressBar) {
+                    const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+                    this.progressBar.style.width = progress + '%';
+                }
+            }
+
+            setupNavDots() {
+                const container = document.getElementById('navDots');
+                if (!container) return;
+                this.slides.forEach((_, i) => {
+                    const dot = document.createElement('button');
+                    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                    dot.addEventListener('click', () => this.goToSlide(i));
+                    container.appendChild(dot);
+                });
+                this.dots = container.querySelectorAll('.nav-dot');
+            }
+
+            updateNavDots() {
+                if (!this.dots) return;
+                this.dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === this.currentSlide);
+                });
+            }
+        }
+
+        /* ===========================================
+           INLINE EDITOR
+           =========================================== */
+        const INLINE_EDITOR_FILE_PATH =
+            '/Users/dh/projects/github.com/DJRHails/slides.hails.info/internal-agents/index.html';
+
+        function buildLcsTable(beforeLines, afterLines) {
+            const table = Array.from({ length: beforeLines.length + 1 }, () => {
+                return new Array(afterLines.length + 1).fill(0);
+            });
+
+            for (let beforeIndex = beforeLines.length - 1; beforeIndex >= 0; beforeIndex -= 1) {
+                for (let afterIndex = afterLines.length - 1; afterIndex >= 0; afterIndex -= 1) {
+                    if (beforeLines[beforeIndex] === afterLines[afterIndex]) {
+                        table[beforeIndex][afterIndex] = table[beforeIndex + 1][afterIndex + 1] + 1;
+                        continue;
+                    }
+
+                    table[beforeIndex][afterIndex] = Math.max(
+                        table[beforeIndex + 1][afterIndex],
+                        table[beforeIndex][afterIndex + 1]
+                    );
+                }
+            }
+
+            return table;
+        }
+
+        function buildDiffOperations(beforeText, afterText) {
+            const beforeLines = beforeText.split('\n');
+            const afterLines = afterText.split('\n');
+            const table = buildLcsTable(beforeLines, afterLines);
+            const operations = [];
+
+            let beforeIndex = 0;
+            let afterIndex = 0;
+
+            while (beforeIndex < beforeLines.length && afterIndex < afterLines.length) {
+                if (beforeLines[beforeIndex] === afterLines[afterIndex]) {
+                    operations.push({ type: ' ', line: beforeLines[beforeIndex] });
+                    beforeIndex += 1;
+                    afterIndex += 1;
+                    continue;
+                }
+
+                if (table[beforeIndex + 1][afterIndex] >= table[beforeIndex][afterIndex + 1]) {
+                    operations.push({ type: '-', line: beforeLines[beforeIndex] });
+                    beforeIndex += 1;
+                    continue;
+                }
+
+                operations.push({ type: '+', line: afterLines[afterIndex] });
+                afterIndex += 1;
+            }
+
+            while (beforeIndex < beforeLines.length) {
+                operations.push({ type: '-', line: beforeLines[beforeIndex] });
+                beforeIndex += 1;
+            }
+
+            while (afterIndex < afterLines.length) {
+                operations.push({ type: '+', line: afterLines[afterIndex] });
+                afterIndex += 1;
+            }
+
+            return operations;
+        }
+
+        function formatUnifiedRange(start, count) {
+            if (count === 1) return String(start);
+            return `${start},${count}`;
+        }
+
+        function buildUnifiedDiff(beforeText, afterText, filePath, contextLines = 3) {
+            if (beforeText === afterText) {
+                return '';
+            }
+
+            const operations = buildDiffOperations(beforeText, afterText);
+            const changedIndexes = operations.flatMap((operation, index) => {
+                return operation.type === ' ' ? [] : [index];
+            });
+            const ranges = [];
+
+            changedIndexes.forEach((index) => {
+                const nextRange = {
+                    start: Math.max(0, index - contextLines),
+                    end: Math.min(operations.length - 1, index + contextLines),
+                };
+                const previousRange = ranges.at(-1);
+
+                if (!previousRange || nextRange.start > previousRange.end + 1) {
+                    ranges.push(nextRange);
+                    return;
+                }
+
+                previousRange.end = Math.max(previousRange.end, nextRange.end);
+            });
+
+            const diffLines = [`--- ${filePath}`, `+++ ${filePath}`];
+
+            ranges.forEach((range) => {
+                const hunkOperations = operations.slice(range.start, range.end + 1);
+                let beforeStart = 1;
+                let afterStart = 1;
+
+                operations.slice(0, range.start).forEach((operation) => {
+                    if (operation.type === ' ' || operation.type === '-') beforeStart += 1;
+                    if (operation.type === ' ' || operation.type === '+') afterStart += 1;
+                });
+
+                const beforeCount = hunkOperations.filter((operation) => {
+                    return operation.type === ' ' || operation.type === '-';
+                }).length;
+                const afterCount = hunkOperations.filter((operation) => {
+                    return operation.type === ' ' || operation.type === '+';
+                }).length;
+
+                diffLines.push(
+                    `@@ -${formatUnifiedRange(beforeStart, beforeCount)} +${formatUnifiedRange(afterStart, afterCount)} @@`
+                );
+                hunkOperations.forEach((operation) => {
+                    diffLines.push(`${operation.type}${operation.line}`);
+                });
+            });
+
+            return diffLines.join('\n');
+        }
+
+        class InlineEditor {
+            constructor() {
+                this.isActive = false;
+                this.filePath = INLINE_EDITOR_FILE_PATH;
+                this.storageKey = 'slides-internal-agents:v1';
+                this.editableSelector =
+                    'h1, h2, h3, p, li, td, .stat-value, .stat-label, .eyebrow, .subtitle, .tag';
+                this.editToggle = document.getElementById('editToggle');
+                this.originalDocumentHtml = this.serializeDocument();
+                this.restoreSavedEdits();
+                this.setupHotzone();
+                this.setupKeyboard();
+            }
+
+            getEditableElements() {
+                return Array.from(document.querySelectorAll(this.editableSelector)).filter((element) => {
+                    return !element.closest('.nav-dots') && !element.closest('.edit-toggle');
+                });
+            }
+
+            isEditingTarget(target) {
+                if (!target) return false;
+                if (typeof target.isContentEditable === 'boolean') {
+                    return target.isContentEditable;
+                }
+                return target.getAttribute?.('contenteditable') === 'true';
+            }
+
+            serializeDocument() {
+                const clone = document.documentElement.cloneNode(true);
+                const clonedEditToggle = clone.querySelector('#editToggle');
+
+                if (clonedEditToggle) {
+                    clonedEditToggle.textContent = 'Edit';
+                    clonedEditToggle.classList.remove('active');
+                    clonedEditToggle.classList.remove('show');
+                }
+
+                clone.querySelectorAll(this.editableSelector).forEach((element) => {
+                    element.removeAttribute('contenteditable');
+                });
+
+                return '<!DOCTYPE html>\n' + clone.outerHTML;
+            }
+
+            buildClipboardPrompt(currentDocumentHtml) {
+                const diff = buildUnifiedDiff(
+                    this.originalDocumentHtml,
+                    currentDocumentHtml,
+                    this.filePath
+                );
+
+                if (!diff) {
+                    return `No changes detected for ${this.filePath}.`;
+                }
+
+                return [
+                    `Apply this unified diff to ${this.filePath}`,
+                    '',
+                    '```diff',
+                    diff,
+                    '```',
+                ].join('\n');
+            }
+
+            async copyTextToClipboard(text) {
+                if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', 'true');
+                textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+                document.body.appendChild(textarea);
+                textarea.select();
+
+                const copied = document.execCommand?.('copy') ?? false;
+                textarea.remove();
+                return copied;
+            }
+
+            restoreSavedEdits() {
+                const saved = localStorage.getItem(this.storageKey);
+                if (!saved) return;
+
+                try {
+                    const edits = JSON.parse(saved);
+                    if (!Array.isArray(edits)) return;
+
+                    const elements = this.getEditableElements();
+                    edits.forEach(({ index, html }) => {
+                        if (Number.isInteger(index) && typeof html === 'string' && elements[index]) {
+                            elements[index].innerHTML = html;
+                        }
+                    });
+                } catch (error) {
+                    console.warn('Could not restore saved slide edits.', error);
+                }
+            }
+
+            setupHotzone() {
+                const hotzone = document.getElementById('editHotzone');
+                let hideTimeout = null;
+
+                hotzone.addEventListener('mouseenter', () => {
+                    clearTimeout(hideTimeout);
+                    this.editToggle.classList.add('show');
+                });
+                hotzone.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        if (!this.isActive) this.editToggle.classList.remove('show');
+                    }, 400);
+                });
+                this.editToggle.addEventListener('mouseenter', () => {
+                    clearTimeout(hideTimeout);
+                });
+                this.editToggle.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        if (!this.isActive) this.editToggle.classList.remove('show');
+                    }, 400);
+                });
+                this.editToggle.addEventListener('click', () => this.toggleEditMode());
+                hotzone.addEventListener('click', () => this.toggleEditMode());
+            }
+
+            setupKeyboard() {
+                document.addEventListener('keydown', (e) => {
+                    const isTypingTarget = this.isEditingTarget(e.target)
+                        || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName);
+
+                    if ((e.key === 'e' || e.key === 'E') && !isTypingTarget) {
+                        e.preventDefault();
+                        this.toggleEditMode();
+                        return;
+                    }
+
+                    if (e.key === 's' && (e.ctrlKey || e.metaKey) && this.isActive) {
+                        e.preventDefault();
+                        void this.save();
+                    }
+                });
+            }
+
+            toggleEditMode() {
+                this.isActive = !this.isActive;
+                this.editToggle.classList.toggle('active', this.isActive);
+                this.editToggle.textContent = this.isActive ? 'Editing (Ctrl+S to save)' : 'Edit';
+
+                this.getEditableElements().forEach((element) => {
+                    element.contentEditable = this.isActive ? 'true' : 'false';
+                });
+            }
+
+            downloadSnapshot(snapshot) {
+                if (typeof Blob === 'undefined' || typeof URL === 'undefined') {
+                    return;
+                }
+
+                const blob = new Blob([snapshot], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'internal-agents-edited.html';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 0);
+            }
+
+            showStatusMessage(message) {
+                const msg = document.createElement('div');
+                msg.textContent = message;
+                msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--red);color:#fff;padding:0.5em 1.5em;border-radius:4px;font-family:var(--font-body);z-index:99999;';
+                document.body.appendChild(msg);
+                setTimeout(() => msg.remove(), 1200);
+            }
+
+            async save() {
+                const edits = this.getEditableElements().map((element, index) => ({
+                    index,
+                    html: element.innerHTML,
+                }));
+                const snapshot = this.serializeDocument();
+                const clipboardPrompt = this.buildClipboardPrompt(snapshot);
+
+                localStorage.setItem(this.storageKey, JSON.stringify(edits));
+
+                try {
+                    await this.copyTextToClipboard(clipboardPrompt);
+                    this.showStatusMessage('Copied diff to clipboard');
+                } catch (error) {
+                    console.warn('Could not copy diff to clipboard.', error);
+                    this.showStatusMessage('Saved locally; clipboard blocked');
+                }
+
+                this.downloadSnapshot(snapshot);
+            }
+        }
+
+        /* Initialize */
+        const presentation = new SlidePresentation();
+        const editor = new InlineEditor();
+    </script>
+
+</body>
+
+</html>
