@@ -854,7 +854,7 @@
             <h1 class="reveal" style="font-size: clamp(2.5rem, 8vw, 7rem); line-height: 0.95; max-width: 95vw;">
                 Self-Serve<br>Internal Agents</h1>
             <p class="subtitle reveal">How to spin up your own AI teammate &mdash; no infra knowledge required.</p>
-            <span class="tag reveal">J&amp;J Engineering</span>
+            <span class="tag reveal">Jack &amp; JILL</span>
             <div class="author reveal">Daniel Hails &middot; May 2026</div>
         </div>
         <span class="slide-number">1 / 15</span>
@@ -866,24 +866,29 @@
     <section class="slide slide-light" data-slide="1">
         <div class="slide-content">
             <p class="eyebrow reveal">In action</p>
-            <h2 class="reveal">What it looks like day-to-day</h2>
+            <h2 class="reveal">Some Examples</h2>
             <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
                     <img src="figures/slack-jane-reply.png"
                         alt="Jane bot replying in Slack about a pipeline update from Matt at Lunar"
                         style="max-height: min(35vh, 300px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
-                    <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic;">
-                        Jane proactively relaying a client reply
-                    </p>
+                    <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic;"><b>Bad</b>: Jane relaying a client reply without any value-add; and getting details wrong.</p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
                     <img src="figures/slack-jo-research.png"
                         alt="Jo agent doing research in Slack, pulling Datadog metrics"
                         style="max-height: min(35vh, 300px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
-                    <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic;">
-                        Jo pulling Datadog numbers to answer an @mention
+                    <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic;">Good: Jo scoping blast radius to answer an @mention
                     </p>
                 </div>
+            </div>
+            <div class="reveal" style="margin-top: var(--element-gap); display: flex; flex-direction: column; gap: var(--element-gap); align-items: center;">
+                <img src="figures/slack-jo-policy-escalation.png"
+                    alt="Jo diagnosing a candidate search issue in Slack, then getting feedback to avoid exposing internal credit-limit details to users"
+                    style="max-height: min(28vh, 240px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);">
+                <p style="font-size: var(--small-size); color: var(--text-muted); font-style: italic; text-align: center; max-width: min(80vw, 760px);">
+                    Another real example: solid diagnosis, but a reminder that agents also need product and policy judgment.
+                </p>
             </div>
         </div>
         <div class="slide-source">
@@ -898,23 +903,24 @@
     <section class="slide slide-dark" data-slide="2">
         <div class="slide-content">
             <p class="eyebrow reveal">Real examples</p>
-            <h2 class="reveal">Agents handling complex, multi-step work</h2>
+            <h2 class="reveal">Complex, multi-step work</h2>
             <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: flex-start;">
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
                     <img src="figures/slack-jane-escalation.png"
                         alt="Jane agent filing a Linear ticket, drafting a customer reply, and escalating to humans"
                         style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
-                        Jane: escalation &rarr; filed JAC-1930 &rarr; drafted customer reply &rarr; flagged to humans
+                        Jane is running on a simpler 'dumber' model - partly for testing and partly for volume-cost ratios.
+                    </p>
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
+                        Intelligence really makes a massive difference, even with guard rails.
                     </p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
                     <img src="figures/slack-jo-bug-investigation.png"
                         alt="Jo investigating a bug report by looking up user data and tracing through conversation history"
                         style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
-                        Jo: investigated a bug, found root cause, reported identifiers and findings
-                    </p>
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">By contrast, the use of native multi-modal capability to locate a user; get internal IDs, find the root cause, and build a fix that got deployed after a &lt;3 minute review.</p>
                 </div>
             </div>
         </div>
@@ -946,8 +952,8 @@
                                 Objects)</td>
                         </tr>
                         <tr>
-                            <td class="highlight">E2B microVM</td>
-                            <td>The actual compute &mdash; a full Linux box where the agent runs shell commands</td>
+                          <td class="highlight">E2B</td>
+                            <td>The actual computer &mdash; a full Linux box where the agent runs shell commands</td>
                         </tr>
                         <tr>
                             <td class="highlight">Turnstile</td>
@@ -959,8 +965,8 @@
                             <td>Personas, skills, and shared tools &mdash; checked into the repo</td>
                         </tr>
                         <tr>
-                            <td class="highlight">Slack bots</td>
-                            <td>13 named bots that relay messages between humans and sandboxes</td>
+                            <td class="highlight">Joe&amp;Jack&amp;Jill</td>
+                            <td>The internal Turret UI for internal agents and Coding Jack / Coding Jills</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1001,18 +1007,16 @@
                 <span class="flow-step">Reply in thread</span>
             </div>
             <ul class="bullet-list-sm reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 800px);">
-                <li><strong style="color: var(--text-on-dark);">@mention catch-all:</strong> any @bot in any channel
-                    dispatches to that bot &mdash; no config needed</li>
+                <li><strong style="color: var(--text-on-dark);">@mention catch-all:</strong> any @bot in any non-dedicated channel
+                    dispatches to that bot &mdash; no config needed.</li>
                 <li><strong style="color: var(--text-on-dark);">Per-channel bindings:</strong> dedicated channels
                     hard-wired to specific agents</li>
                 <li><strong style="color: var(--text-on-dark);">DMs:</strong> route to whichever bot you messaged
                     directly</li>
-                <li><strong style="color: var(--text-on-dark);">Proactive channels:</strong> agents post unprompted updates
-                    (<a href="https://app.slack.com/client/T08K80X9NCQ/C0AV9UJQPN3" target="_blank" style="color: var(--red);">see #engineering</a>)</li>
+                <li><strong style="color: var(--text-on-dark);">Proactive channels:</strong> agents post unprompted messages - e.g. #jack-feedback / #jill-feedback / #general-agent</li>
             </ul>
             <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 600px);">
-                <p>Key insight: if you @jesse in any channel, Jesse&rsquo;s sandbox boots. Zero routing config needed
-                    for basic usage.</p>
+                <p>Key insight: if you @jesse in any channel, Jesse&rsquo;s sandbox boots. The first message takes around 60s, subsequent loads are faster.</p>
             </div>
             <div class="slide-links reveal" style="margin-top: var(--element-gap);">
                 <a href="https://jackandjillai.slack.com/archives/C0AV9UJQPN3/p1778172603251489" target="_blank">General Agent Townhall</a>
@@ -1088,7 +1092,6 @@
             <ul class="bullet-list-sm reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 800px);">
                 <li><strong style="color: var(--text-on-dark);">Juno:</strong> funnel health checks every 4 hours &mdash; flags anomalies to #product</li>
                 <li><strong style="color: var(--text-on-dark);">Jane:</strong> monitors Front inbox &mdash; escalates stale conversations proactively</li>
-                <li><strong style="color: var(--text-on-dark);">Jo:</strong> posts PR summaries and Grain API announcements to engineering channels</li>
             </ul>
             <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: center;">
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
@@ -1096,8 +1099,7 @@
                         alt="Jo announcing Grain API support merge with clear next steps"
                         style="max-height: min(30vh, 250px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
-                        Jo proactively announcing a merged feature with next steps
-                    </p>
+                        Jo proactively requesting aid for a merged feature</p>
                 </div>
                 <div>
                     <div class="highlight-box">
@@ -1122,7 +1124,7 @@
     <section class="slide slide-light" data-slide="7">
         <div class="slide-content">
             <p class="eyebrow reveal">Agent anatomy</p>
-            <h2 class="reveal">Four files define an agent</h2>
+            <h2 class="reveal">Simple files define an agent</h2>
             <div class="two-col reveal" style="margin-top: var(--content-gap);">
                 <div class="file-tree" style="color: var(--text-dark);">
                     <span class="dir" style="color: var(--accent-blue);">.agents/agents/jesse/</span><br>
@@ -1160,7 +1162,7 @@
     <section class="slide slide-dark" data-slide="8">
         <div class="slide-content">
             <p class="eyebrow reveal">Capabilities</p>
-            <h2 class="reveal">Skills and tools give agents superpowers</h2>
+            <h2 class="reveal">Skills and tools give agents superpowers - make more of them.</h2>
             <div class="two-col reveal" style="margin-top: var(--content-gap);">
                 <div>
                     <h3 style="margin-bottom: var(--element-gap); color: var(--text-on-dark);">Shared tools <code class="inline">.agents/tools/</code></h3>
@@ -1184,6 +1186,14 @@
             <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 700px);">
                 <p>Skills are loaded on demand &mdash; like &ldquo;if you need to do X, here&rsquo;s
                     how&rdquo; documents injected into the agent&rsquo;s context.</p>
+            </div>
+            <div class="reveal" style="margin-top: var(--element-gap); display: flex; flex-direction: column; gap: var(--element-gap); align-items: center;">
+                <img src="figures/slack-jo-command-palette-2.png"
+                    alt="Jo announcing a new command palette for Turret in Slack"
+                    style="max-height: min(26vh, 220px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic; text-align: center; max-width: min(80vw, 760px);">
+                    Product improvements show up here too &mdash; Jo shipping a command palette for faster thread search and actions.
+                </p>
             </div>
             <div class="slide-links reveal" style="margin-top: var(--element-gap);">
                 <a href="https://github.com/Jack-And-Jill-AI/ai-recruiter/tree/main/.agents/skills" target="_blank">Browse skills on GitHub</a>
@@ -1327,11 +1337,6 @@
                 <li>CC&rsquo;s the requester (pulled from Slack user profile)</li>
                 <li>Confirms delivery in-thread</li>
             </ul>
-            <div class="reveal" style="margin-top: var(--content-gap);">
-                <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.4);">
-                    Total setup time: ~5 minutes of file edits. No deploy. No infra ticket.
-                </p>
-            </div>
             <div class="slide-links reveal" style="margin-top: var(--element-gap);">
                 <a href="https://joeand.jackandjill.ai/thread/pi::web::jdm5kd" target="_blank">Here&rsquo;s one I made earlier &mdash; live thread</a>
             </div>
@@ -1361,15 +1366,10 @@
                     <ul class="bullet-list-sm">
                         <li>Multi-hour workflows (sandbox lifetime limits)</li>
                         <li>Ambiguous judgment calls (blocks or guesses wrong)</li>
-                        <li>Browser interaction (no GUI in sandbox)</li>
-                        <li>Direct production DB access (credentials scoped)</li>
+                        <li>E2E Browser flow testing (no credentials in&nbsp; sandbox)</li>
+                        <li>Write production DB access (all DB access is forked for safety)</li>
                     </ul>
                 </div>
-            </div>
-            <div class="reveal" style="margin-top: var(--content-gap);">
-                <img src="figures/slack-shoutout.png"
-                    alt="Team shoutout in Slack: Getting our internal agents up and running, code review agent head and shoulders above any other service"
-                    style="max-height: min(25vh, 200px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
             </div>
         </div>
         <span class="slide-number">13 / 15</span>
@@ -1395,8 +1395,8 @@
                     <ul class="bullet-list-sm">
                         <li><strong style="color: var(--text-on-dark);">No reply?</strong> Sandbox failed to boot &mdash; check Turret logs on dashboard</li>
                         <li><strong style="color: var(--text-on-dark);">Empty turns?</strong> Credential issue &mdash; Turnstile rejected the sentinel key</li>
-                        <li><strong style="color: var(--text-on-dark);">Wrong answer?</strong> Check HANDOFF.md &mdash; what context did it have?</li>
-                        <li><strong style="color: var(--text-on-dark);">Infinite loop?</strong> Agent retrying a failing command &mdash; kill the thread</li>
+                        <li><strong style="color: var(--text-on-dark);">Wrong answer?</strong> Check what the agent was thinking.</li>
+                        <li><strong style="color: var(--text-on-dark);">Infinite loop?</strong> Agent retrying a failing command &mdash; kill the thread and try again.</li>
                     </ul>
                     <div class="highlight-box" style="margin-top: var(--content-gap);">
                         <p>Every failure is debuggable. The thread transcript shows every command that ran.</p>
