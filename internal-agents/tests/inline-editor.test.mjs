@@ -13,7 +13,7 @@ function extractInlineEditorSource() {
     throw new Error('Could not find inline editor source in index.html');
   }
 
-  return `${match[0].replace(/\n\n        \/\* Initialize \*\/$/, '')}\nthis.InlineEditor = InlineEditor;\nthis.buildUnifiedDiff = buildUnifiedDiff;\nthis.getInlineEditorConfig = getInlineEditorConfig;`;
+  return `${match[0].replace(/\n\n        \/\* Initialize \*\/$/, '')}\nthis.InlineEditor = InlineEditor;\nthis.buildUnifiedDiff = buildUnifiedDiff;\nthis.getInlineEditorConfig = getInlineEditorConfig;\nthis.normalizeSerializedDocument = normalizeSerializedDocument;`;
 }
 
 class MockClassList {
@@ -65,6 +65,7 @@ class MockElement {
     this.clickCount = 0;
     this.removeCount = 0;
     this.parentNode = null;
+    this.children = [];
     this._contentEditable = 'inherit';
     this.value = '';
   }
@@ -117,6 +118,11 @@ class MockElement {
     this.selected = true;
   }
 
+  appendChild(element) {
+    element.parentNode = this;
+    this.children.push(element);
+  }
+
   remove() {
     this.removeCount += 1;
     if (this.parentNode?.children) {
@@ -149,6 +155,7 @@ function createEnvironment({
   savedEdits,
   snapshotHtml = '<html><body>snapshot</body></html>',
   windowPathname = '/internal-agents/index.html',
+  clipboardShouldFail = false,
 } = {}) {
   const editableElements = [
     new MockElement('h1', 'Title'),
@@ -187,6 +194,9 @@ function createEnvironment({
     navigator: {
       clipboard: {
         async writeText(text) {
+          if (clipboardShouldFail) {
+            throw new Error('Clipboard blocked');
+          }
           clipboardWrites.push(text);
         },
       },
@@ -342,6 +352,29 @@ test('clipboard prompt includes the file path and a unified diff', () => {
   assert.match(prompt, /\+<html><body>after<\/body><\/html>/);
 });
 
+test('normalization strips runtime presentation state from the diff input', () => {
+  const { editor } = createEnvironment();
+  editor.originalDocumentHtml = [
+    '<!DOCTYPE html>',
+    '<html><body>',
+    '<div class="progress-bar" id="progressBar"></div>',
+    '<nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>',
+    '<section class="slide slide-light" data-slide="0"><h2>Stable title</h2></section>',
+    '</body></html>',
+  ].join('\n');
+
+  const prompt = editor.buildClipboardPrompt([
+    '<!DOCTYPE html>',
+    '<html><body style="overscroll-behavior-x: auto;">',
+    '<div class="progress-bar" id="progressBar" style="width: 93.3333%;"></div>',
+    '<nav class="nav-dots" id="navDots" aria-label="Slide navigation"><button class="nav-dot active"></button></nav>',
+    '<section class="slide slide-light visible" data-slide="0"><h2>Stable title</h2></section>',
+    '</body></html>',
+  ].join('\n'));
+
+  assert.equal(prompt, 'No changes detected for /internal-agents/index.html.');
+});
+
 test('save persists editable content and copies the diff prompt to clipboard', async () => {
   const { clipboardWrites, createdElements, editToggle, editableElements, editor, localStorage } = createEnvironment();
   editor.toggleEditMode();
@@ -362,4 +395,19 @@ test('save persists editable content and copies the diff prompt to clipboard', a
   assert.match(clipboardWrites[0], /\+<html><body>after<\/body><\/html>/);
   assert.equal(createdElements.some((child) => child.tagName === 'A' && child.clickCount === 1), true);
   assert.equal(editToggle.classList.contains('active'), true);
+});
+
+test('save shows the unified diff inline when clipboard copy is blocked', async () => {
+  const { body, editableElements, editor } = createEnvironment({ clipboardShouldFail: true });
+  editor.toggleEditMode();
+  editableElements[0].innerHTML = 'Saved title';
+  editor.serializeDocument = () => '<!DOCTYPE html>\n<html><body>after</body></html>';
+  editor.originalDocumentHtml = '<!DOCTYPE html>\n<html><body>before</body></html>';
+
+  await editor.save();
+
+  const textareas = body.children.filter((child) => child.tagName === 'TEXTAREA');
+  assert.equal(textareas.length, 1);
+  assert.match(textareas[0].value, /Apply this unified diff to/);
+  assert.match(textareas[0].value, /\+<html><body>after<\/body><\/html>/);
 });

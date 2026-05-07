@@ -1644,6 +1644,62 @@
             };
         }
 
+        function stripBodyRuntimeStyles(html) {
+            return html.replace(
+                /<body\b([^>]*)\sstyle="([^"]*)"([^>]*)>/i,
+                (match, before, styleText, after) => {
+                    const keptDeclarations = styleText
+                        .split(';')
+                        .map((part) => part.trim())
+                        .filter(Boolean)
+                        .filter((declaration) => {
+                            return !/^overscroll-behavior(?:-x|-y)?\s*:/i.test(declaration);
+                        });
+
+                    const rebuiltAttributes = `${before}${after}`;
+                    if (keptDeclarations.length === 0) {
+                        return `<body${rebuiltAttributes}>`;
+                    }
+
+                    return `<body${before} style="${keptDeclarations.join('; ')}"${after}>`;
+                }
+            );
+        }
+
+        function stripProgressBarRuntimeStyles(html) {
+            return html.replace(
+                /(<div\b[^>]*class="progress-bar"[^>]*?)\sstyle="[^"]*"([^>]*>)/i,
+                '$1$2'
+            );
+        }
+
+        function stripNavDotRuntimeMarkup(html) {
+            return html.replace(
+                /(<nav\b[^>]*class="nav-dots"[^>]*id="navDots"[^>]*>)[\s\S]*?(<\/nav>)/i,
+                '$1$2'
+            );
+        }
+
+        function stripVisibleSlideClasses(html) {
+            return html.replace(/class="([^"]*)"/g, (match, classNames) => {
+                const cleanedClassNames = classNames
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .filter((className) => className !== 'visible')
+                    .join(' ');
+                return `class="${cleanedClassNames}"`;
+            });
+        }
+
+        function normalizeSerializedDocument(html) {
+            let normalized = html;
+            normalized = stripBodyRuntimeStyles(normalized);
+            normalized = stripProgressBarRuntimeStyles(normalized);
+            normalized = stripNavDotRuntimeMarkup(normalized);
+            normalized = stripVisibleSlideClasses(normalized);
+            return normalized;
+        }
+
         function buildLcsTable(beforeLines, afterLines) {
             const table = Array.from({ length: beforeLines.length + 1 }, () => {
                 return new Array(afterLines.length + 1).fill(0);
@@ -1811,13 +1867,15 @@
                     element.removeAttribute('contenteditable');
                 });
 
-                return '<!DOCTYPE html>\n' + clone.outerHTML;
+                return normalizeSerializedDocument('<!DOCTYPE html>\n' + clone.outerHTML);
             }
 
             buildClipboardPrompt(currentDocumentHtml) {
+                const beforeHtml = normalizeSerializedDocument(this.originalDocumentHtml);
+                const afterHtml = normalizeSerializedDocument(currentDocumentHtml);
                 const diff = buildUnifiedDiff(
-                    this.originalDocumentHtml,
-                    currentDocumentHtml,
+                    beforeHtml,
+                    afterHtml,
                     this.filePath
                 );
 
@@ -1949,6 +2007,21 @@
                 setTimeout(() => msg.remove(), 1200);
             }
 
+            showDiffPrompt(promptText) {
+                const existing = document.getElementById('inlineEditorDiffPrompt');
+                if (existing) {
+                    existing.remove();
+                }
+
+                const textarea = document.createElement('textarea');
+                textarea.id = 'inlineEditorDiffPrompt';
+                textarea.value = promptText;
+                textarea.setAttribute('readonly', 'true');
+                textarea.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;width:calc(100vw - 2rem);height:min(38vh,320px);padding:1rem;background:#111;color:#fff;border:2px solid var(--red);border-radius:8px;font-family:var(--font-mono);font-size:12px;line-height:1.5;z-index:99999;white-space:pre;';
+                document.body.appendChild(textarea);
+                textarea.select();
+            }
+
             async save() {
                 const edits = this.getEditableElements().map((element, index) => ({
                     index,
@@ -1964,7 +2037,8 @@
                     this.showStatusMessage('Copied diff to clipboard');
                 } catch (error) {
                     console.warn('Could not copy diff to clipboard.', error);
-                    this.showStatusMessage('Saved locally; clipboard blocked');
+                    this.showDiffPrompt(clipboardPrompt);
+                    this.showStatusMessage('Clipboard blocked; diff shown on page');
                 }
 
                 this.downloadSnapshot(snapshot);
