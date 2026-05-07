@@ -1279,16 +1279,14 @@
                 Responds to @mentions, sends emails with requester CC&rsquo;d, does light research.
             </p>
             <div class="reveal" style="margin-top: var(--content-gap);">
-                <h3 style="margin-bottom: var(--element-gap);">Step 1: Set up Google credentials</h3>
-                <div class="code-block">
-                    <code><span class="comment"># Install gog CLI (one-time)</span>
-<span class="keyword">brew install</span> gog
-
-<span class="comment"># Point at your OAuth client JSON</span>
-<span class="keyword">gog auth credentials set</span> ~/path/to/client_secret.json
-
-<span class="comment"># Authorize the sending account</span>
-<span class="keyword">gog auth add</span> office@jackandjill.ai</code>
+                <h3 style="margin-bottom: var(--element-gap);">Step 1: Copy a real integration thread</h3>
+                <p style="color: var(--text-muted); max-width: min(85vw, 760px);">
+                    Need a new capability? Start from a working example. This thread shows Jo building a brand-new
+                    Google OAuth integration for <code class="inline">gog</code> end-to-end, which is the fastest way
+                    to understand the pattern before configuring Jesse.
+                </p>
+                <div class="slide-links" style="margin-top: var(--element-gap);">
+                    <a href="https://joeand.jackandjill.ai/thread/pi::web::jdm5kd" target="_blank">Google OAuth + gog integration thread</a>
                 </div>
             </div>
             <div class="reveal" style="margin-top: var(--content-gap);">
@@ -1612,8 +1610,39 @@
         /* ===========================================
            INLINE EDITOR
            =========================================== */
-        const INLINE_EDITOR_FILE_PATH =
-            '/Users/dh/projects/github.com/DJRHails/slides.hails.info/internal-agents/index.html';
+        function readInlineEditorMeta(name) {
+            return document.querySelector(`meta[name="${name}"]`)?.getAttribute('content')?.trim() || '';
+        }
+
+        function deriveInlineEditorFilePath() {
+            const configuredPath = readInlineEditorMeta('inline-editor-file-path');
+            if (configuredPath) return configuredPath;
+
+            const pathname = window.location?.pathname || '/index.html';
+            if (pathname.endsWith('.html')) return pathname;
+            return pathname.replace(/\/$/, '') + '/index.html';
+        }
+
+        function deriveInlineEditorStorageKey(filePath) {
+            return readInlineEditorMeta('inline-editor-storage-key') || `inline-editor:${filePath}`;
+        }
+
+        function deriveInlineEditorDownloadName(filePath) {
+            const configuredName = readInlineEditorMeta('inline-editor-download-name');
+            if (configuredName) return configuredName;
+
+            const fileName = filePath.split('/').filter(Boolean).at(-1) || 'slides.html';
+            return fileName.replace(/\.html$/i, '') + '-edited.html';
+        }
+
+        function getInlineEditorConfig() {
+            const filePath = deriveInlineEditorFilePath();
+            return {
+                filePath,
+                storageKey: deriveInlineEditorStorageKey(filePath),
+                downloadName: deriveInlineEditorDownloadName(filePath),
+            };
+        }
 
         function buildLcsTable(beforeLines, afterLines) {
             const table = Array.from({ length: beforeLines.length + 1 }, () => {
@@ -1741,8 +1770,10 @@
         class InlineEditor {
             constructor() {
                 this.isActive = false;
-                this.filePath = INLINE_EDITOR_FILE_PATH;
-                this.storageKey = 'slides-internal-agents:v1';
+                this.config = getInlineEditorConfig();
+                this.filePath = this.config.filePath;
+                this.storageKey = this.config.storageKey;
+                this.downloadName = this.config.downloadName;
                 this.editableSelector =
                     'h1, h2, h3, p, li, td, .stat-value, .stat-label, .eyebrow, .subtitle, .tag';
                 this.editToggle = document.getElementById('editToggle');
@@ -1902,7 +1933,7 @@
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'internal-agents-edited.html';
+                link.download = this.downloadName;
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();

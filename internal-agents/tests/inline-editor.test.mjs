@@ -6,14 +6,14 @@ import { readFileSync } from 'node:fs';
 function extractInlineEditorSource() {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const match = html.match(
-    /const INLINE_EDITOR_FILE_PATH =[\s\S]*?\n\n        class InlineEditor \{[\s\S]*?\n        \}\n\n        \/\* Initialize \*\//,
+    /function readInlineEditorMeta\(name\) \{[\s\S]*?\n\n        class InlineEditor \{[\s\S]*?\n        \}\n\n        \/\* Initialize \*\//,
   );
 
   if (!match) {
     throw new Error('Could not find inline editor source in index.html');
   }
 
-  return `${match[0].replace(/\n\n        \/\* Initialize \*\/$/, '')}\nthis.InlineEditor = InlineEditor;\nthis.buildUnifiedDiff = buildUnifiedDiff;`;
+  return `${match[0].replace(/\n\n        \/\* Initialize \*\/$/, '')}\nthis.InlineEditor = InlineEditor;\nthis.buildUnifiedDiff = buildUnifiedDiff;\nthis.getInlineEditorConfig = getInlineEditorConfig;`;
 }
 
 class MockClassList {
@@ -144,7 +144,12 @@ function createDocumentClone(snapshotHtml) {
   };
 }
 
-function createEnvironment({ savedEdits, snapshotHtml = '<html><body>snapshot</body></html>' } = {}) {
+function createEnvironment({
+  meta = {},
+  savedEdits,
+  snapshotHtml = '<html><body>snapshot</body></html>',
+  windowPathname = '/internal-agents/index.html',
+} = {}) {
   const editableElements = [
     new MockElement('h1', 'Title'),
     new MockElement('p', 'Body copy'),
@@ -161,8 +166,9 @@ function createEnvironment({ savedEdits, snapshotHtml = '<html><body>snapshot</b
   };
   const keydownHandlers = [];
   const clipboardWrites = [];
+  const derivedStorageKey = meta['inline-editor-storage-key'] || `inline-editor:${meta['inline-editor-file-path'] || windowPathname}`;
   const localStorage = {
-    store: new Map(savedEdits ? [['slides-internal-agents:v1', savedEdits]] : []),
+    store: new Map(savedEdits ? [[derivedStorageKey, savedEdits]] : []),
     getItem(key) {
       return this.store.has(key) ? this.store.get(key) : null;
     },
@@ -173,6 +179,11 @@ function createEnvironment({ savedEdits, snapshotHtml = '<html><body>snapshot</b
   const context = {
     console,
     localStorage,
+    window: {
+      location: {
+        pathname: windowPathname,
+      },
+    },
     navigator: {
       clipboard: {
         async writeText(text) {
@@ -209,6 +220,21 @@ function createEnvironment({ savedEdits, snapshotHtml = '<html><body>snapshot</b
         if (id === 'editToggle') return editToggle;
         if (id === 'editHotzone') return editHotzone;
         return null;
+      },
+      querySelector(selector) {
+        const match = selector.match(/meta\[name="([^"]+)"\]/);
+        if (!match) {
+          return null;
+        }
+
+        const content = meta[match[1]];
+        if (!content) {
+          return null;
+        }
+
+        const element = new MockElement('meta');
+        element.setAttribute('content', content);
+        return element;
       },
       querySelectorAll(selector) {
         if (!selector.includes('h1')) {
@@ -280,19 +306,38 @@ test('pressing E works when focus is on a contenteditable=false element', () => 
   assert.equal(event.preventDefaultCalled, true);
 });
 
+test('config auto-detects from the current path', () => {
+  const { editor } = createEnvironment({ windowPathname: '/talks/demo/index.html' });
+
+  assert.equal(editor.filePath, '/talks/demo/index.html');
+  assert.equal(editor.storageKey, 'inline-editor:/talks/demo/index.html');
+  assert.equal(editor.downloadName, 'index-edited.html');
+});
+
+test('meta tags override auto-detected editor config', () => {
+  const { editor } = createEnvironment({
+    meta: {
+      'inline-editor-file-path': '/repo/slides/custom-deck.html',
+      'inline-editor-storage-key': 'slides-custom:v2',
+      'inline-editor-download-name': 'custom-export.html',
+    },
+  });
+
+  assert.equal(editor.filePath, '/repo/slides/custom-deck.html');
+  assert.equal(editor.storageKey, 'slides-custom:v2');
+  assert.equal(editor.downloadName, 'custom-export.html');
+});
+
 test('clipboard prompt includes the file path and a unified diff', () => {
   const { editor } = createEnvironment({ snapshotHtml: '<html><body>before</body></html>' });
   editor.originalDocumentHtml = '<!DOCTYPE html>\n<html><body>before</body></html>';
 
   const prompt = editor.buildClipboardPrompt('<!DOCTYPE html>\n<html><body>after</body></html>');
 
-  assert.match(
-    prompt,
-    /Apply this unified diff to \/Users\/dh\/projects\/github\.com\/DJRHails\/slides\.hails\.info\/internal-agents\/index\.html/,
-  );
+  assert.match(prompt, /Apply this unified diff to \/internal-agents\/index\.html/);
   assert.match(prompt, /```diff/);
-  assert.match(prompt, /--- \/Users\/dh\/projects\/github\.com\/DJRHails\/slides\.hails\.info\/internal-agents\/index\.html/);
-  assert.match(prompt, /\+\+\+ \/Users\/dh\/projects\/github\.com\/DJRHails\/slides\.hails\.info\/internal-agents\/index\.html/);
+  assert.match(prompt, /--- \/internal-agents\/index\.html/);
+  assert.match(prompt, /\+\+\+ \/internal-agents\/index\.html/);
   assert.match(prompt, /-<html><body>before<\/body><\/html>/);
   assert.match(prompt, /\+<html><body>after<\/body><\/html>/);
 });
@@ -307,7 +352,7 @@ test('save persists editable content and copies the diff prompt to clipboard', a
 
   await editor.save();
 
-  const saved = JSON.parse(localStorage.getItem('slides-internal-agents:v1'));
+  const saved = JSON.parse(localStorage.getItem('inline-editor:/internal-agents/index.html'));
   assert.deepEqual(saved, [
     { index: 0, html: 'Saved title' },
     { index: 1, html: 'Saved paragraph' },
