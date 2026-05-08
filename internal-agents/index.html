@@ -904,24 +904,30 @@
         <div class="slide-content">
             <p class="eyebrow reveal">Real examples</p>
             <h2 class="reveal">Complex, multi-step work</h2>
+            <p class="reveal"
+                style="margin-top: var(--element-gap); font-size: clamp(1rem, 1.8vw, 1.35rem); color: rgba(232, 230, 225, 0.6); max-width: min(85vw, 840px);">
+                Same workflow, very different outcomes: model quality and multimodal capability still make a huge difference.
+            </p>
             <div class="two-col reveal" style="margin-top: var(--content-gap); align-items: flex-start;">
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
                     <img src="figures/slack-jane-escalation.png"
                         alt="Jane agent filing a Linear ticket, drafting a customer reply, and escalating to humans"
                         style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
-                        Jane is running on a simpler 'dumber' model - partly for testing and partly for volume-cost ratios.
-                    </p>
-                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
-                        Intelligence really makes a massive difference, even with guard rails.
+                        Jane on a simpler, cheaper model: useful for volume, but much more brittle when judgment matters.
                     </p>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: var(--element-gap);">
                     <img src="figures/slack-jo-bug-investigation.png"
                         alt="Jo investigating a bug report by looking up user data and tracing through conversation history"
                         style="max-height: min(55vh, 480px); border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">By contrast, the use of native multi-modal capability to locate a user; get internal IDs, find the root cause, and build a fix that got deployed after a &lt;3 minute review.</p>
+                    <p style="font-size: var(--small-size); color: rgba(232, 230, 225, 0.5); font-style: italic;">
+                        Jo using native multimodal capability to locate a user, get internal IDs, find the root cause, and build a fix that was deployed after a &lt;3 minute review.
+                    </p>
                 </div>
+            </div>
+            <div class="highlight-box reveal" style="margin-top: var(--content-gap); max-width: min(85vw, 700px);">
+                <p>Intelligence really makes a massive difference here, even with guard rails.</p>
             </div>
         </div>
         <div class="slide-source">
@@ -1162,7 +1168,11 @@
     <section class="slide slide-dark" data-slide="8">
         <div class="slide-content">
             <p class="eyebrow reveal">Capabilities</p>
-            <h2 class="reveal">Skills and tools give agents superpowers - make more of them.</h2>
+            <h2 class="reveal">Skills and tools give agents superpowers</h2>
+            <p class="reveal"
+                style="margin-top: var(--element-gap); font-size: clamp(1rem, 1.7vw, 1.25rem); color: rgba(232, 230, 225, 0.6); max-width: min(85vw, 760px);">
+                Once you have one good agent, the obvious next step is to make more of them.
+            </p>
             <div class="two-col reveal" style="margin-top: var(--content-gap);">
                 <div>
                     <h3 style="margin-bottom: var(--element-gap); color: var(--text-on-dark);">Shared tools <code class="inline">.agents/tools/</code></h3>
